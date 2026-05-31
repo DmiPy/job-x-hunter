@@ -16,6 +16,9 @@ public class User {
     @Column(name="user_id")
     private UUID userId;
 
+    @OneToOne(mappedBy = "user")
+    private UserProfile userProfile;
+
     @Column(name="email" ,nullable = false, unique = true)
     private String email;
 
@@ -55,6 +58,14 @@ public class User {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public UserProfile getUserProfile() {
+        return userProfile;
+    }
+
+    public void setUserProfile(UserProfile userProfile) {
+        this.userProfile = userProfile;
     }
 }
 

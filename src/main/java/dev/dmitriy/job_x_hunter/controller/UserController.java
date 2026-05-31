@@ -2,6 +2,7 @@ package dev.dmitriy.job_x_hunter.controller;
 
 import dev.dmitriy.job_x_hunter.dto.CreateUserRequest;
 import dev.dmitriy.job_x_hunter.dto.UserResponseDTO;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 import dev.dmitriy.job_x_hunter.service.UserService;
 
@@ -19,7 +20,7 @@ public class UserController {
     }
 
     @PostMapping
-    public UserResponseDTO createUser(@RequestBody CreateUserRequest request){
+    public UserResponseDTO createUser(@Valid @RequestBody CreateUserRequest request){
         return userService.createUser(request);
     }
 

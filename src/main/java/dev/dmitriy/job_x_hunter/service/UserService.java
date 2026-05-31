@@ -3,7 +3,8 @@ package dev.dmitriy.job_x_hunter.service;
 import dev.dmitriy.job_x_hunter.dto.CreateUserRequest;
 import dev.dmitriy.job_x_hunter.dto.UserResponseDTO;
 import dev.dmitriy.job_x_hunter.entity.User;
-import dev.dmitriy.job_x_hunter.exceptions.UserAlreadyExistsException;
+import dev.dmitriy.job_x_hunter.exception.UserAlreadyExistsException;
+import dev.dmitriy.job_x_hunter.exception.UserNotFoundException;
 import dev.dmitriy.job_x_hunter.mapper.UserMapper;
 import dev.dmitriy.job_x_hunter.repository.UserRepository;
 import org.springframework.stereotype.Service;
@@ -32,7 +33,9 @@ public class UserService {
     }
 
     public UserResponseDTO getUserById(UUID id) {
-        User user = repo.findById(id).orElseThrow( () -> new RuntimeException("User not found: " + id));
+        User user = repo.findById(id).orElseThrow( () -> {
+            throw new UserNotFoundException("User with the id: "+ id +" was not found.");
+        });
         return mapper.toDto(user);
     }
 
