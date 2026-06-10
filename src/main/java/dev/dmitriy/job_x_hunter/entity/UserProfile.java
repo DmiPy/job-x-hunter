@@ -3,7 +3,6 @@ package dev.dmitriy.job_x_hunter.entity;
 import dev.dmitriy.job_x_hunter.enums.JobType;
 import jakarta.persistence.*;
 
-import java.util.UUID;
 
 @Entity
 @Table(name="user_profile")

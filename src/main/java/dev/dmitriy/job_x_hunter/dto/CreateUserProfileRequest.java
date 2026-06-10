@@ -2,11 +2,22 @@ package dev.dmitriy.job_x_hunter.dto;
 
 import dev.dmitriy.job_x_hunter.enums.JobType;
 
+import java.util.UUID;
+
 public class CreateUserProfileRequest {
+    private UUID userId;
     private String firstname;
     private String surname;
     private Double expectedSalary;
     private JobType jobType;
+
+    public UUID getUserId() {
+        return userId;
+    }
+
+    public void setUserId(UUID userId) {
+        this.userId = userId;
+    }
 
     public String getFirstname() {
         return firstname;
