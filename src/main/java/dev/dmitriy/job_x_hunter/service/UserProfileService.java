@@ -41,7 +41,7 @@ public class UserProfileService {
         return mapper.toDto(userProfile);
     }
 
-    public UserProfileResponseDTO getUserProfileByDto(Long profileId){
+    public UserProfileResponseDTO getUserProfileById(Long profileId){
         UserProfile userProfile = upRepo.findById(profileId).orElseThrow(() -> {
             throw new UserNotFoundException("User with the id: "+ profileId +" was not found.");
         });

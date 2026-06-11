@@ -3,7 +3,9 @@ package dev.dmitriy.job_x_hunter.mapper;
 import dev.dmitriy.job_x_hunter.dto.CreateUserProfileRequest;
 import dev.dmitriy.job_x_hunter.dto.UserProfileResponseDTO;
 import dev.dmitriy.job_x_hunter.entity.UserProfile;
+import org.springframework.stereotype.Component;
 
+@Component
 public class UserProfileMapper {
     public UserProfileResponseDTO toDto(UserProfile profile){
         UserProfileResponseDTO dto = new UserProfileResponseDTO();

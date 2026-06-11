@@ -1,13 +1,21 @@
 package dev.dmitriy.job_x_hunter.dto;
 
 import dev.dmitriy.job_x_hunter.enums.JobType;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.PositiveOrZero;
 
 import java.util.UUID;
 
 public class CreateUserProfileRequest {
     private UUID userId;
+
+    @NotBlank
     private String firstname;
+
+    @NotBlank
     private String surname;
+
+    @PositiveOrZero
     private Double expectedSalary;
     private JobType jobType;
 
