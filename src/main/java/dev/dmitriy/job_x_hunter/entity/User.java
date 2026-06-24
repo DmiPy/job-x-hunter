@@ -12,7 +12,7 @@ import java.util.UUID;
 @Table( name= "users")
 public class User {
     @Id
-    // ! Generated Value will be removed after SupaBase integration
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name="user_id")
     private UUID userId;
 

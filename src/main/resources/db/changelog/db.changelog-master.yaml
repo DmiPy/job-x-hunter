@@ -1,7 +1,0 @@
-databaseChangeLog:
-  - changeSet:
-      id: 1
-      author: dmitriy
-      changes:
-        - sqlFile:
-            path: db/changelog/V1__init.sql
