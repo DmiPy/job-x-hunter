@@ -1,22 +1,12 @@
 package dev.dmitriy.job_x_hunter.dto;
 
+import lombok.Getter;
+import lombok.Setter;
+
+@Setter
+@Getter
 public class SkillResponseDTO {
     private Long skillId;
     private String skillName;
 
-    public Long getSkillId() {
-        return skillId;
-    }
-
-    public String getSkillName() {
-        return skillName;
-    }
-
-    public void setSkillName(String skillName) {
-        this.skillName = skillName;
-    }
-
-    public void setSkillId(Long skillId) {
-        this.skillId = skillId;
-    }
 }
