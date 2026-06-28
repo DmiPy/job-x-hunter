@@ -91,5 +91,36 @@ public class GlobalExceptionHandler {
                 .body(error);
     }
 
+    @ExceptionHandler(UserProfileSkillAlreadyExistsException.class)
+    public ResponseEntity<ErrorResponse> handleUserProfileSkillAlreadyExistsException(
+            UserProfileSkillAlreadyExistsException ex){
+
+        ErrorResponse error = new ErrorResponse();
+
+        error.setStatus(HttpStatus.CONFLICT.value());
+        error.setErrorMessage(ex.getMessage());
+        error.setTimestamp(LocalDateTime.now());
+
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(error);
+    }
+
+    @ExceptionHandler(UserProfileSkillNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleUserProfileSkillNotFoundException(
+            UserProfileSkillNotFoundException ex){
+
+        ErrorResponse error = new ErrorResponse();
+
+        error.setStatus(HttpStatus.NOT_FOUND.value());
+        error.setErrorMessage(ex.getMessage());
+        error.setTimestamp(LocalDateTime.now());
+
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(error);
+    }
+
+
 }
 
