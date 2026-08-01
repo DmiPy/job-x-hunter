@@ -5,7 +5,7 @@ import dev.dmitriy.job_x_hunter.dto.UserProfileSkillResponseDTO;
 import dev.dmitriy.job_x_hunter.entity.Skill;
 import dev.dmitriy.job_x_hunter.entity.UserProfile;
 import dev.dmitriy.job_x_hunter.entity.UserProfileSkill;
-import dev.dmitriy.job_x_hunter.exception.SkillNotFoundException;
+import dev.dmitriy.job_x_hunter.entity.UserProfileSkillId;
 import dev.dmitriy.job_x_hunter.exception.UserProfileNotFoundException;
 import dev.dmitriy.job_x_hunter.exception.UserProfileSkillAlreadyExistsException;
 import dev.dmitriy.job_x_hunter.exception.UserProfileSkillNotFoundException;
@@ -71,10 +71,11 @@ public class UserProfileSkillService {
         Skill skill = findOrCreateSkill(dto.getSkillName());
         validateDuplicateSkill(userProfile.getUserProfileId(), skill.getSkillId(), dto.getSkillName());
 
-        UserProfileSkill upSkill = new UserProfileSkill(
-                userProfile,
-                skill,
-                dto.getProficiency());
+        UserProfileSkill upSkill = new UserProfileSkill();
+
+        upSkill.setUserProfile(userProfile);
+        upSkill.setSkill(skill);
+        upSkill.setProficiency(dto.getProficiency());
 
         upSkill = upsrepo.save(upSkill);
         return mapper.toDto(upSkill);
@@ -102,10 +103,16 @@ public class UserProfileSkillService {
         return mapper.toDto(upSkill);
     }
 
-    public void deleteUserProfileSkill(Long profileId, Long skillId){
+    public UserProfileSkillResponseDTO deleteUserProfileSkill(Long profileId, Long skillId){
         findUserProfile(profileId);
         UserProfileSkill upSkill = findUserProfileSkill(profileId, skillId);
+        UserProfileSkillResponseDTO returnObject = new UserProfileSkillResponseDTO();
+        returnObject.setUserProfileId(profileId);
+        returnObject.setSkillId(skillId);
+        returnObject.setSkillName("deleted");
+        returnObject.setProficiency(0);
         upsrepo.delete(upSkill);
+        return returnObject;
     }
 
     public UserProfileSkillResponseDTO getUserProfileSkill(

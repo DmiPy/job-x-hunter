@@ -14,7 +14,8 @@ public class UserProfileMapper {
         dto.setSurname(profile.getSurname());
         dto.setUserId(profile.getUser().getUserId());
         dto.setExpectedSalary(profile.getExpectedSalary());
-        dto.setJobType(profile.getJobType());
+        dto.setEmploymentType(profile.getEmploymentType());
+        dto.setWorkplaceType(profile.getWorkplaceType());
         return dto;
     };
 
@@ -22,8 +23,9 @@ public class UserProfileMapper {
         UserProfile up = new UserProfile();
         up.setFirstname(request.getFirstname());
         up.setSurname(request.getSurname());
-        up.setJobType(request.getJobType());
+        up.setEmploymentType(request.getEmploymentType());
         up.setExpectedSalary(request.getExpectedSalary());
+        up.setWorkplaceType(request.getWorkplaceType());
         return up;
     }
 }

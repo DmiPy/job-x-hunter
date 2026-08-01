@@ -1,6 +1,7 @@
 package dev.dmitriy.job_x_hunter.entity;
 
-import dev.dmitriy.job_x_hunter.enums.JobType;
+import dev.dmitriy.job_x_hunter.enums.EmploymentType;
+import dev.dmitriy.job_x_hunter.enums.WorkplaceType;
 import jakarta.persistence.*;
 
 
@@ -24,7 +25,12 @@ public class UserProfile {
     private Double expectedSalary;
 
     @Enumerated(EnumType.STRING)
-    private JobType jobType;
+    @Column(name = "employment_type")
+    private EmploymentType employmentType;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "workplace_type")
+    private WorkplaceType workplaceType;
 
     public Long getUserProfileId() {
         return userProfileId;
@@ -46,9 +52,9 @@ public class UserProfile {
         return expectedSalary;
     }
 
-    public JobType getJobType() {
-        return jobType;
-    }
+    public EmploymentType getEmploymentType() { return employmentType; }
+
+    public WorkplaceType getWorkplaceType() { return workplaceType; }
 
     public void setUserProfileId(Long userProfileId) {
         this.userProfileId = userProfileId;
@@ -70,7 +76,8 @@ public class UserProfile {
         this.surname = surname;
     }
 
-    public void setJobType(JobType jobType) {
-        this.jobType = jobType;
-    }
+    public void setEmploymentType(EmploymentType employmentType) { this.employmentType = employmentType; }
+
+    public void setWorkplaceType(WorkplaceType workplaceType) { this.workplaceType = workplaceType; }
+
 }

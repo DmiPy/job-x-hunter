@@ -1,8 +1,7 @@
 package dev.dmitriy.job_x_hunter.dto;
 
-import dev.dmitriy.job_x_hunter.entity.User;
-import dev.dmitriy.job_x_hunter.enums.JobType;
-import jakarta.persistence.*;
+import dev.dmitriy.job_x_hunter.enums.EmploymentType;
+import dev.dmitriy.job_x_hunter.enums.WorkplaceType;
 
 import java.util.UUID;
 
@@ -17,7 +16,9 @@ public class UserProfileResponseDTO {
 
     private Double expectedSalary;
 
-    private JobType jobType;
+    private EmploymentType employmentType;
+
+    private WorkplaceType workplaceType;
 
     public Long getUserProfileId() {
         return UserProfileId;
@@ -39,8 +40,12 @@ public class UserProfileResponseDTO {
         return expectedSalary;
     }
 
-    public JobType getJobType() {
-        return jobType;
+    public EmploymentType getEmploymentType() {
+        return employmentType;
+    }
+
+    public WorkplaceType getWorkplaceType() {
+        return workplaceType;
     }
 
     public void setUserProfileId(Long userProfileId) {
@@ -63,8 +68,12 @@ public class UserProfileResponseDTO {
         this.expectedSalary = expectedSalary;
     }
 
-    public void setJobType(JobType jobType) {
-        this.jobType = jobType;
+    public void setEmploymentType(EmploymentType employmentType) {
+        this.employmentType = employmentType;
+    }
+
+    public void setWorkplaceType(WorkplaceType workplaceType) {
+        this.workplaceType = workplaceType;
     }
 
 }

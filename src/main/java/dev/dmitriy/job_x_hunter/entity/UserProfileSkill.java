@@ -1,21 +1,20 @@
 package dev.dmitriy.job_x_hunter.entity;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
-import java.util.Optional;
+import java.util.Objects;
 
 @Getter
 @Setter
 @Entity
-@Table(name = "user_skill")
+@Table(name = "user_profile_skill")
 public class UserProfileSkill {
     @EmbeddedId
-    private UserProfileSkillId id;
+    private UserProfileSkillId id = new UserProfileSkillId();
 
     @ManyToOne
     @MapsId("userProfileId")
@@ -27,23 +26,26 @@ public class UserProfileSkill {
     @JoinColumn(name="skill_id")
     private Skill skill;
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof UserProfileSkill that)) return false;
+        return Objects.equals(id, that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
+
     @Column(nullable = false)
     @Min(1)
     @Max(5)
     private Integer proficiency;
 
-    public UserProfileSkill(UserProfile userProfile, Skill skill, @NotNull Integer proficiency) {
-        this.userProfile = userProfile;
-        this.skill = skill;
-        this.proficiency = proficiency;
+    public UserProfileSkill() {
     }
 
-    public UserProfileSkill(UserProfileSkillId id, UserProfile up, Skill skill, Integer proficiency) {
-        this.id = id;
-        this.userProfile = up;
-        this.skill = skill;
-        this.proficiency = proficiency;
-    }
     //1	Beginner
     //2	Elementary
     //3	Intermediate
