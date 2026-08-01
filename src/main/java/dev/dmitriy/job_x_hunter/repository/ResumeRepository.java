@@ -1,0 +1,10 @@
+package dev.dmitriy.job_x_hunter.repository;
+
+import dev.dmitriy.job_x_hunter.entity.Resume;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.List;
+
+public interface ResumeRepository extends JpaRepository<Resume, Long> {
+    List<Resume> findByUserProfile_UserProfileId(Long profileId);
+}

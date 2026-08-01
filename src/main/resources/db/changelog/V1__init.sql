@@ -100,7 +100,8 @@ CREATE TABLE search_filter(
                               user_profile_id BIGINT NOT NULL,
                               min_salary INT DEFAULT 0,
                               max_salary INT,
-                              job_type VARCHAR(255),
+                              employment_type VARCHAR(255),
+                              workplace_type VARCHAR(255),
                               is_notify_active BOOLEAN DEFAULT FALSE,
                               FOREIGN KEY(user_profile_id) REFERENCES user_profile(user_profile_id)
 );

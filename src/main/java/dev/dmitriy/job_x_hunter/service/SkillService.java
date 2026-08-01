@@ -3,10 +3,8 @@ package dev.dmitriy.job_x_hunter.service;
 import dev.dmitriy.job_x_hunter.dto.SkillResponseDTO;
 import dev.dmitriy.job_x_hunter.entity.Skill;
 import dev.dmitriy.job_x_hunter.exception.SkillNotFoundException;
-import dev.dmitriy.job_x_hunter.exception.UserNotFoundException;
 import dev.dmitriy.job_x_hunter.mapper.SkillMapper;
 import dev.dmitriy.job_x_hunter.repository.SkillRepository;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
