@@ -106,13 +106,9 @@ public class UserProfileSkillService {
     public UserProfileSkillResponseDTO deleteUserProfileSkill(Long profileId, Long skillId){
         findUserProfile(profileId);
         UserProfileSkill upSkill = findUserProfileSkill(profileId, skillId);
-        UserProfileSkillResponseDTO returnObject = new UserProfileSkillResponseDTO();
-        returnObject.setUserProfileId(profileId);
-        returnObject.setSkillId(skillId);
-        returnObject.setSkillName("deleted");
-        returnObject.setProficiency(0);
+        UserProfileSkillResponseDTO dto = mapper.toDto(upSkill);
         upsrepo.delete(upSkill);
-        return returnObject;
+        return dto;
     }
 
     public UserProfileSkillResponseDTO getUserProfileSkill(

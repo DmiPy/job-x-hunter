@@ -1,64 +1,43 @@
-# Maven
-target/
-!.mvn/wrapper/maven-wrapper.jar
+### IntelliJ IDEA ###
+out/
+!**/src/main/**/out/
+!**/src/test/**/out/
+
+### Eclipse ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+bin/
+!**/src/main/**/bin/
+!**/src/test/**/bin/
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+### VS Code ###
+.vscode/
+
+### Mac OS ###
+.DS_Store
 
 # IntelliJ IDEA
 .idea/
 *.iml
-out/
 
-# VS Code
-.vscode/
+# Maven
+target/
 
 # Logs
 *.log
-logs/
 
-# Spring Boot
-spring.log
-
-# OS files
+# OS
 .DS_Store
 Thumbs.db
-
-# Environment files / secrets
-.env
-.env.local
-application-local.properties
-application-secret.properties
-
-# Database
-*.db
-*.sqlite
-
-# Generated files
-generated/
-tmp/
-temp/
-
-# Java
-*.class
-
-# Lombok generated metadata
-.lombok/
-
-# Maven wrapper (keep these)
-!.mvn/wrapper/maven-wrapper.properties
-!mvnw
-!mvnw.cmd
-
-# Test reports
-surefire-reports/
-failsafe-reports/
-
-# Coverage
-coverage/
-jacoco.exec
-
-# Uploaded files (for resume PDFs later)
-uploads/
-
-# Frontend (when Angular is added later)
-node_modules/
-dist/
-.angular/
