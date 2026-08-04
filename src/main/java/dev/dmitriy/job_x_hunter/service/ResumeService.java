@@ -43,6 +43,7 @@ public class ResumeService {
         Resume newResume = mapper.toEntity(request);
         UserProfile up = findUserProfile(request.getUserProfileId());
         newResume.setUserProfile(up);
+        newResume.setUrl("/");
         newResume = rrepo.save(newResume);
         return mapper.toDto(newResume);
     }

@@ -5,6 +5,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -16,7 +18,6 @@ import java.time.LocalDateTime;
 @Setter
 public class Resume {
     @Id
-    @NotNull
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long resumeId;
 
@@ -31,14 +32,18 @@ public class Resume {
     @NotBlank
     private String url;
 
-    @NotNull
+    @CreationTimestamp
+    @Column(name = "upload_date", updatable = false)
     private LocalDate uploadDate;
 
     private String description;
 
-    @NotNull
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
+    @UpdateTimestamp
+    @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 }
 
