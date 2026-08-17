@@ -17,6 +17,7 @@ public class CreateJobVacancyRequest {
     private String company;
     private String companyLocation;
     private String url;
+    private String source;
     private LocalDate postDate;
 }
 

@@ -2,6 +2,7 @@ package dev.dmitriy.job_x_hunter.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
@@ -24,7 +25,11 @@ public class JobVacancy {
     @NotBlank
     private String url;
 
+    @NotBlank
+    private String source;
+
     @Column(name = "post_date", updatable = false)
+    @NotNull
     private LocalDate postDate;
 
     private String description;

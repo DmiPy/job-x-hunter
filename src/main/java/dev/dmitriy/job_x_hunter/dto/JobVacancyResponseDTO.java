@@ -15,6 +15,7 @@ public class JobVacancyResponseDTO {
     private String url;
     private LocalDate postDate;
     private String description;
+    private String source;
     private String company;
     private String companyLocation;
 }
