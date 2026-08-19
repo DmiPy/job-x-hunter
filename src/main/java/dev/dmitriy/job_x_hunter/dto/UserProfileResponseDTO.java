@@ -2,9 +2,14 @@ package dev.dmitriy.job_x_hunter.dto;
 
 import dev.dmitriy.job_x_hunter.enums.EmploymentType;
 import dev.dmitriy.job_x_hunter.enums.WorkplaceType;
+import lombok.Getter;
+import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
+@Getter
+@Setter
 public class UserProfileResponseDTO {
     private Long UserProfileId;
 
@@ -14,66 +19,9 @@ public class UserProfileResponseDTO {
 
     private String surname;
 
-    private Double expectedSalary;
+    private BigDecimal expectedSalary;
 
     private EmploymentType employmentType;
 
     private WorkplaceType workplaceType;
-
-    public Long getUserProfileId() {
-        return UserProfileId;
-    }
-
-    public UUID getUserId() {
-        return userId;
-    }
-
-    public String getFirstname() {
-        return firstname;
-    }
-
-    public String getSurname() {
-        return surname;
-    }
-
-    public Double getExpectedSalary() {
-        return expectedSalary;
-    }
-
-    public EmploymentType getEmploymentType() {
-        return employmentType;
-    }
-
-    public WorkplaceType getWorkplaceType() {
-        return workplaceType;
-    }
-
-    public void setUserProfileId(Long userProfileId) {
-        UserProfileId = userProfileId;
-    }
-
-    public void setFirstname(String firstname) {
-        this.firstname = firstname;
-    }
-
-    public void setUserId(UUID userId) {
-        this.userId = userId;
-    }
-
-    public void setSurname(String surname) {
-        this.surname = surname;
-    }
-
-    public void setExpectedSalary(Double expectedSalary) {
-        this.expectedSalary = expectedSalary;
-    }
-
-    public void setEmploymentType(EmploymentType employmentType) {
-        this.employmentType = employmentType;
-    }
-
-    public void setWorkplaceType(WorkplaceType workplaceType) {
-        this.workplaceType = workplaceType;
-    }
-
 }

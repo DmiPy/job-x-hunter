@@ -14,3 +14,11 @@ databaseChangeLog:
         - sqlFile:
             path: V2__insert_skills.sql
             relativeToChangelogFile: true
+
+  - changeSet:
+      id: 3
+      author: dmitriy
+      changes:
+        - sqlFile:
+            path: V3__insert_test_data.sql
+            relativeToChangelogFile: true

@@ -11,7 +11,14 @@ import java.time.LocalDate;
 
 
 @Entity
-@Table(name="job_vacancy")
+@Table(name = "job_vacancy",
+        uniqueConstraints = {
+            @UniqueConstraint(
+                    name = "uk_job_vacancy_source_job_id",
+                    columnNames = {"source", "source_job_id"}
+                )
+        }
+)
 @Getter
 @Setter
 public class JobVacancy {
@@ -19,25 +26,29 @@ public class JobVacancy {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long jobVacancyId;
 
-    @NotBlank
+    @Column(nullable = false)
     private String title;
 
-    @NotBlank
+    @Column(nullable = false)
     private String url;
 
-    @NotBlank
+    @Column(nullable = false)
     private String source;
 
-    @Column(name = "post_date", updatable = false)
-    @NotNull
-    private LocalDate postDate;
+    @Column(name = "source_job_id")
+    private String sourceJobId;
 
+    @Column(name = "post_date", updatable = false, nullable = false)
+    private LocalDate postDate = LocalDate.now();
+
+    @Column(nullable = false)
     private String description;
 
-    @NotBlank
+    @Column(nullable = false)
     private String company;
 
-    @NotBlank
+    @Column(nullable = false)
     private String companyLocation;
+
 }
 

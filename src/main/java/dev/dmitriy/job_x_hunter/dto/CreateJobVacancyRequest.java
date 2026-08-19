@@ -10,14 +10,26 @@ import java.time.LocalDate;
 @Getter
 @Setter
 public class CreateJobVacancyRequest {
+
     @NotBlank
     private String title;
 
     private String description;
-    private String company;
-    private String companyLocation;
-    private String url;
-    private String source;
-    private LocalDate postDate;
-}
 
+    @NotBlank
+    private String company;
+
+    @NotBlank
+    private String companyLocation;
+
+    @NotBlank
+    private String url;
+
+    @NotBlank
+    private String source;
+
+    private LocalDate postDate;
+
+    @NotBlank
+    private String sourceJobId;
+}

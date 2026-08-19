@@ -1,8 +1,5 @@
 package dev.dmitriy.job_x_hunter.dto;
 
-
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 import java.time.LocalDate;
@@ -16,6 +13,7 @@ public class JobVacancyResponseDTO {
     private LocalDate postDate;
     private String description;
     private String source;
+    private String sourceJobId;
     private String company;
     private String companyLocation;
 }

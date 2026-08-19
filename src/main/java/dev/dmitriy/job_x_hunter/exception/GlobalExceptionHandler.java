@@ -136,5 +136,35 @@ public class GlobalExceptionHandler {
                 .body(error);
     }
 
+    @ExceptionHandler(JobVacancyNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleJobVacancyNotFoundException(
+            JobVacancyNotFoundException ex){
+
+        ErrorResponse error = new ErrorResponse();
+
+        error.setStatus(HttpStatus.NOT_FOUND.value());
+        error.setErrorMessage(ex.getMessage());
+        error.setTimestamp(LocalDateTime.now());
+
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(error);
+    }
+
+    @ExceptionHandler(JobVacancyAlreadyExistsException.class)
+    public ResponseEntity<ErrorResponse> handleJobVacancyAlreadyExistsException(
+            JobVacancyAlreadyExistsException ex){
+
+        ErrorResponse error = new ErrorResponse();
+
+        error.setStatus(HttpStatus.CONFLICT.value());
+        error.setErrorMessage(ex.getMessage());
+        error.setTimestamp(LocalDateTime.now());
+
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(error);
+    }
+
 }
 
