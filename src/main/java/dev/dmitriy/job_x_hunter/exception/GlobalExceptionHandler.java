@@ -166,5 +166,20 @@ public class GlobalExceptionHandler {
                 .body(error);
     }
 
+    @ExceptionHandler(JobSkillAlreadyExistsException.class)
+    public ResponseEntity<ErrorResponse> handleJobSkillAlreadyExistsException(
+            JobSkillAlreadyExistsException ex){
+
+        ErrorResponse error = new ErrorResponse();
+
+        error.setStatus(HttpStatus.CONFLICT.value());
+        error.setErrorMessage(ex.getMessage());
+        error.setTimestamp(LocalDateTime.now());
+
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(error);
+    }
+
 }
 
