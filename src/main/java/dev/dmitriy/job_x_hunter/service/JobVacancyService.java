@@ -7,6 +7,7 @@ import dev.dmitriy.job_x_hunter.exception.JobVacancyAlreadyExistsException;
 import dev.dmitriy.job_x_hunter.exception.JobVacancyNotFoundException;
 import dev.dmitriy.job_x_hunter.mapper.JobVacancyMapper;
 import dev.dmitriy.job_x_hunter.repository.JobVacancyRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -47,8 +48,9 @@ public class JobVacancyService {
         return mapper.toDto(entity);
     }
 
-    public void deleteExpiredJobVacancies(){
-        repo.deleteByPostDateBefore(LocalDate.now().minusDays(30));
+    @Transactional
+    public int deleteExpiredJobVacancies(){
+        return repo.deleteByPostDateBefore(LocalDate.now().minusDays(30));
     }
 
 

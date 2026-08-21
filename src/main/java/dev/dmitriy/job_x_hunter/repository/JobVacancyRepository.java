@@ -8,6 +8,6 @@ import java.util.Optional;
 
 
 public interface JobVacancyRepository extends JpaRepository<JobVacancy, Long> {
-    void deleteByPostDateBefore(LocalDate date);
+    int deleteByPostDateBefore(LocalDate date);
     Optional<JobVacancy> findBySourceAndSourceJobId(String source, String sourceJobId);
 }
