@@ -57,7 +57,7 @@ public class JobSkillService {
         if(jsrepo.existsById(jobSkillId)){
             throw new JobSkillAlreadyExistsException(
                     "Job Skill with an id of job vacancy:" + jobSkillId.getJobVacancyId()
-                            + "and id of skill:" + jobSkillId.getSkillId() + " was not found."
+                            + " and id of skill:" + jobSkillId.getSkillId() + " was not found."
             );
         }
 
