@@ -21,9 +21,9 @@ import java.util.List;
 @Service
 public class JobSkillService {
     private final SkillMapper skillMapper;
-    private JobSkillRepository jsrepo;
-    private JobVacancyRepository jvrepo;
-    private SkillRepository srepo;
+    private final JobSkillRepository jsrepo;
+    private final JobVacancyRepository jvrepo;
+    private final SkillRepository srepo;
 
     public JobSkillService(
             JobSkillRepository jsrepo,
@@ -37,15 +37,11 @@ public class JobSkillService {
     }
 
     private JobVacancy findOrCreateJobVacancy(Long jobVacancyId){
-        return jvrepo.findById(jobVacancyId).orElseThrow(() -> {
-            throw new JobVacancyNotFoundException("Vacancy with an id:"+ jobVacancyId + " does not exist.");
-        });
+        return jvrepo.findById(jobVacancyId).orElseThrow(() -> new JobVacancyNotFoundException("Vacancy with an id:" + jobVacancyId + " does not exist."));
     }
 
     private Skill findOrCreateSkill(Long skillId){
-        return srepo.findById(skillId).orElseThrow(() -> {
-            throw new SkillNotFoundException("Skill with an id:"+ skillId + " does not exist.");
-        });
+        return srepo.findById(skillId).orElseThrow(() -> new SkillNotFoundException("Skill with an id:" + skillId + " does not exist."));
     }
 
     public JobSkillResponseDTO createJobSkill(CreateJobSkillRequest request){
