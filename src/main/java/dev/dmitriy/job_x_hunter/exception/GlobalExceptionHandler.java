@@ -181,5 +181,20 @@ public class GlobalExceptionHandler {
                 .body(error);
     }
 
+    @ExceptionHandler(AdzunaApiClientNotConfiguredCorrectlyException.class)
+    public ResponseEntity<ErrorResponse> handleAdzunaApiClientNotConfiguredCorrectlyException(
+            AdzunaApiClientNotConfiguredCorrectlyException ex){
+
+        ErrorResponse error = new ErrorResponse();
+
+        error.setStatus(HttpStatus.BAD_REQUEST.value());
+        error.setErrorMessage(ex.getMessage());
+        error.setTimestamp(LocalDateTime.now());
+
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(error);
+    }
+
 }
 
