@@ -1,5 +1,6 @@
 package dev.dmitriy.job_x_hunter.jobparsing;
 
+import dev.dmitriy.job_x_hunter.dto.AdzunaApiClientQueryDTO;
 import dev.dmitriy.job_x_hunter.dto.AdzunaApiClientResponseDTO;
 import dev.dmitriy.job_x_hunter.exception.AdzunaApiClientNotConfiguredCorrectlyException;
 import org.springframework.stereotype.Component;
@@ -15,17 +16,7 @@ public class AdzunaApiClient {
         this.properties = adzunaProperties;
     }
 
-    public AdzunaApiClientResponseDTO getJobs(
-            Integer jobsAmount,
-            String[] keywords,
-            String[] locations,
-            Integer distance,
-            Integer maxDaysOld,
-            Integer salaryMin,
-            Integer salaryMax,
-            String fullTime,
-            String partTime
-    ){
+    public AdzunaApiClientResponseDTO getJobs(AdzunaApiClientQueryDTO query) {
         if(properties.getAppId() == null || properties.getAppKey() == null){
             throw new AdzunaApiClientNotConfiguredCorrectlyException("Adzuna did not receive an App Id or App Key.");
         }
@@ -36,18 +27,18 @@ public class AdzunaApiClient {
                         .scheme("https")
                         .host("api.adzuna.com")
                         .path("/v1/api/jobs/{country}/search/{page}")
-                        .queryParam("app_id", APP_ID)
-                        .queryParam("app_key", APP_KEY)
-                        .queryParam("results_per_page", jobsAmount)
-                        .queryParam("what", keywords)
-                        .queryParam("where", locations)
-                        .queryParam("distance", distance)
-                        .queryParam("max_days_old", maxDaysOld)
-                        .queryParam("salary_min", salaryMin)
-                        .queryParam("salary_max", salaryMax)
-                        .queryParam("full_time", fullTime)
-                        .queryParam("part_time", partTime)
-                        .build(COUNTRY_CODE, 1))
+                        .queryParam("app_id", properties.getAppId())
+                        .queryParam("app_key", properties.getAppKey())
+                        .queryParam("results_per_page", query.getJobsAmount())
+                        .queryParam("what", query.getKeywords())
+                        .queryParam("where", query.getLocations())
+                        .queryParam("distance", query.getDistance())
+                        .queryParam("max_days_old", query.getMaxDaysOld())
+                        .queryParam("salary_min", query.getSalaryMin())
+                        .queryParam("salary_max", query.getSalaryMax())
+                        .queryParam("full_time", query.getFullTime())
+                        .queryParam("part_time", query.getPartTime())
+                        .build(properties.getCountryCode(), 1))
                 .retrieve()
                 .body(AdzunaApiClientResponseDTO.class);
 

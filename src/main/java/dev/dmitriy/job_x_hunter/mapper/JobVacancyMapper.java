@@ -19,6 +19,10 @@ public class JobVacancyMapper {
         entity.setCompanyLocation(dto.getCompanyLocation());
         entity.setSource(dto.getSource());
         entity.setSourceJobId(dto.getSourceJobId());
+        entity.setMinSalary(dto.getMinSalary());
+        entity.setMaxSalary(dto.getMaxSalary());
+        entity.setContractType(dto.getContractType());
+        entity.setContractTime(dto.getContractTime());
 
         if (dto.getPostDate() != null) {
             entity.setPostDate(dto.getPostDate());
@@ -40,6 +44,10 @@ public class JobVacancyMapper {
         dto.setCompanyLocation(entity.getCompanyLocation());
         dto.setSource(entity.getSource());
         dto.setSourceJobId(entity.getSourceJobId());
+        dto.setMinSalary(entity.getMinSalary());
+        dto.setMaxSalary(entity.getMaxSalary());
+        dto.setContractType(entity.getContractType());
+        dto.setContractTime(entity.getContractTime());
 
         return dto;
     }

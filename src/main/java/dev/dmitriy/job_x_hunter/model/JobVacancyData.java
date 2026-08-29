@@ -1,6 +1,5 @@
-package dev.dmitriy.job_x_hunter.dto;
+package dev.dmitriy.job_x_hunter.model;
 
-import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -9,9 +8,8 @@ import java.time.LocalDate;
 
 @Getter
 @Setter
-public class CreateJobVacancyRequest {
+public class JobVacancyData {
 
-    @NotBlank
     private String title;
 
     private String description;
@@ -20,16 +18,13 @@ public class CreateJobVacancyRequest {
 
     private String companyLocation;
 
-    @NotBlank
     private String url;
 
-    @NotBlank
     private String source;
 
-    private LocalDate postDate;
-
-    @NotBlank
     private String sourceJobId;
+
+    private LocalDate postDate;
 
     private BigDecimal minSalary;
 
