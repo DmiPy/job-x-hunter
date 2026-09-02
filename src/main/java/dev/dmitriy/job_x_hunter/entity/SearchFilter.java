@@ -3,6 +3,9 @@ package dev.dmitriy.job_x_hunter.entity;
 import dev.dmitriy.job_x_hunter.enums.EmploymentType;
 import dev.dmitriy.job_x_hunter.enums.WorkplaceType;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -43,3 +46,4 @@ public class SearchFilter {
     @Column(name="keywords")
     private String keywords;
 }
+

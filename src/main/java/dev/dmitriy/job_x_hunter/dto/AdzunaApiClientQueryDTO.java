@@ -16,7 +16,7 @@ public class AdzunaApiClientQueryDTO {
     private String[] keywords;
 
     @NotEmpty
-    private String[] locations;
+    private String location;
 
     @NotNull
     private Integer distance;
