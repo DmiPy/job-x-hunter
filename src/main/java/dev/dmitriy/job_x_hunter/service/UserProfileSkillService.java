@@ -14,6 +14,7 @@ import dev.dmitriy.job_x_hunter.repository.SkillRepository;
 import dev.dmitriy.job_x_hunter.repository.UserProfileRepository;
 import dev.dmitriy.job_x_hunter.repository.UserProfileSkillRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -66,6 +67,7 @@ public class UserProfileSkillService {
         }
     }
 
+    @Transactional
     public UserProfileSkillResponseDTO createUserProfileSkill(CreateUserProfileSkillRequest dto){
         UserProfile userProfile = findUserProfile(dto.getUserProfileId());
         Skill skill = findOrCreateSkill(dto.getSkillName());
@@ -91,6 +93,7 @@ public class UserProfileSkillService {
         return skillsDtoList;
     }
 
+    @Transactional
     public UserProfileSkillResponseDTO updateProficiency(
             Long profileId,
             Long skillId,
@@ -103,6 +106,7 @@ public class UserProfileSkillService {
         return mapper.toDto(upSkill);
     }
 
+    @Transactional
     public UserProfileSkillResponseDTO deleteUserProfileSkill(Long profileId, Long skillId){
         findUserProfile(profileId);
         UserProfileSkill upSkill = findUserProfileSkill(profileId, skillId);

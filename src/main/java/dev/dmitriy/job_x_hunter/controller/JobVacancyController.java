@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpStatus;
 
 @RestController
 @RequestMapping("/job-vacancies")
@@ -18,6 +19,7 @@ public class JobVacancyController {
     }
 
     @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
     public JobVacancyResponseDTO createJobVacancy(@Valid @RequestBody CreateJobVacancyRequest request){
         return service.createJobVacancy(request);
     }

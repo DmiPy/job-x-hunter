@@ -71,3 +71,28 @@ Create a `.env` file based on `.env.example`:
     copy .env.example .env
 
 Do not commit `.env` to Git because it may contain sensitive credentials.
+
+## Environment profiles and database safety
+
+Liquibase is used for schema migrations. The original changesets, paths, IDs,
+and checksums are preserved. Reference skills are always migrated. V3 test
+users, resumes and vacancies run only through the local master changelog.
+
+- `local` is the Docker Compose default and includes local seed data.
+- `test` is reserved for Testcontainers and uses a production-safe changelog.
+- `prod` uses that production-safe changelog and excludes local seed data.
+
+The production-safe changelog assigns the original logical file path to its
+shared changesets. Therefore a database that already executed V3 can switch to
+the production profile without reapplying V1–V3; it simply retains its history.
+Production deployments must set `SPRING_PROFILES_ACTIVE=prod`.
+
+## Tests
+
+Integration tests use PostgreSQL through Testcontainers. Docker Desktop must
+be running before executing:
+
+    ./mvnw test
+
+The tests dynamically provide their datasource and never use the local or
+production database configuration.

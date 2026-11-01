@@ -40,16 +40,12 @@ public class UserProfileSkill {
     }
 
     @Column(nullable = false)
-    @Min(1)
-    @Max(5)
+    @Min(0)
+    @Max(100)
     private Integer proficiency;
 
     public UserProfileSkill() {
     }
 
-    //1	Beginner
-    //2	Elementary
-    //3	Intermediate
-    //4	Advanced
-    //5	Expert
+    // Proficiency is a percentage from 0 to 100.
 }

@@ -8,6 +8,7 @@ import dev.dmitriy.job_x_hunter.exception.UserNotFoundException;
 import dev.dmitriy.job_x_hunter.mapper.UserMapper;
 import dev.dmitriy.job_x_hunter.repository.UserRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
@@ -39,6 +40,7 @@ public class UserService {
         return mapper.toDto(user);
     }
 
+    @Transactional
     public UserResponseDTO createUser(CreateUserRequest request) {
         if(repo.existsByEmail(request.getEmail())){
             throw new UserAlreadyExistsException("User with email " + request.getEmail() + "already exists");

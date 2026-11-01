@@ -24,8 +24,8 @@ public class Resume {
     @NotBlank
     private String title;
 
-    @ManyToOne
-    @JoinColumn(name = "user_profile_id")
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "user_profile_id", nullable = false)
     @NotNull
     private UserProfile userProfile;
 
@@ -36,6 +36,7 @@ public class Resume {
     @Column(name = "upload_date", updatable = false)
     private LocalDate uploadDate;
 
+    @Column(columnDefinition = "TEXT")
     private String description;
 
     @CreationTimestamp

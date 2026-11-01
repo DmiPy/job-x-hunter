@@ -16,10 +16,8 @@ public class CreateJobVacancyRequest {
 
     private String description;
 
-    @NotBlank
     private String company;
 
-    @NotBlank
     private String companyLocation;
 
     @NotBlank

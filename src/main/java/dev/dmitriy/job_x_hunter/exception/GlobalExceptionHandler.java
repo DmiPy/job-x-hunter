@@ -1,185 +1,67 @@
 package dev.dmitriy.job_x_hunter.exception;
 
-
 import dev.dmitriy.job_x_hunter.dto.ErrorResponse;
+import jakarta.validation.ConstraintViolationException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.time.LocalDateTime;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(UserNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleUserNotFoundException(UserNotFoundException ex){
-        ErrorResponse error = new ErrorResponse();
-        error.setStatus(HttpStatus.NOT_FOUND.value());
-        error.setErrorMessage(ex.getMessage());
-        error.setTimestamp(LocalDateTime.now());
-        return ResponseEntity
-                .status(HttpStatus.NOT_FOUND)
-                .body(error);
+    @ExceptionHandler({
+            UserNotFoundException.class,
+            UserProfileNotFoundException.class,
+            UserProfileSkillNotFoundException.class,
+            SkillNotFoundException.class,
+            ResumeNotFoundException.class,
+            JobVacancyNotFoundException.class
+    })
+    public ResponseEntity<ErrorResponse> handleNotFound(RuntimeException ex) {
+        return response(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 
-    @ExceptionHandler(UserAlreadyExistsException.class)
-    public ResponseEntity<ErrorResponse> handleUserAlreadyExistsException(UserAlreadyExistsException ex){
-        ErrorResponse error = new ErrorResponse();
-        error.setStatus(HttpStatus.CONFLICT.value());
-        error.setErrorMessage(ex.getMessage());
-        error.setTimestamp(LocalDateTime.now());
-        return ResponseEntity
-                .status(HttpStatus.CONFLICT)
-                .body(error);
+    @ExceptionHandler({
+            UserAlreadyExistsException.class,
+            UserProfileAlreadyExistsException.class,
+            UserProfileSkillAlreadyExistsException.class,
+            JobVacancyAlreadyExistsException.class,
+            JobSkillAlreadyExistsException.class,
+            DataIntegrityViolationException.class
+    })
+    public ResponseEntity<ErrorResponse> handleConflict(RuntimeException ex) {
+        return response(HttpStatus.CONFLICT, "The requested resource conflicts with existing data.");
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse> handleMethodArgumentNotValidException(MethodArgumentNotValidException ex){
-        ErrorResponse error = new ErrorResponse();
-        error.setStatus(HttpStatus.BAD_REQUEST.value());
-        error.setErrorMessage(ex.getBindingResult().getFieldError().getDefaultMessage());
-        error.setTimestamp(LocalDateTime.now());
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(error);
+    public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException ex) {
+        String message = ex.getAllErrors().isEmpty()
+                ? "Request validation failed."
+                : ex.getAllErrors().getFirst().getDefaultMessage();
+        return response(HttpStatus.BAD_REQUEST, message);
     }
 
-    @ExceptionHandler(UserProfileAlreadyExistsException.class)
-    public ResponseEntity<ErrorResponse> handleUserProfileAlreadyExistsException(
-            UserProfileAlreadyExistsException ex){
-
-        ErrorResponse error = new ErrorResponse();
-
-        error.setStatus(HttpStatus.CONFLICT.value());
-        error.setErrorMessage(ex.getMessage());
-        error.setTimestamp(LocalDateTime.now());
-
-        return ResponseEntity
-                .status(HttpStatus.CONFLICT)
-                .body(error);
+    @ExceptionHandler({
+            ConstraintViolationException.class,
+            HttpMessageNotReadableException.class,
+            MethodArgumentTypeMismatchException.class
+    })
+    public ResponseEntity<ErrorResponse> handleBadRequest(Exception ex) {
+        return response(HttpStatus.BAD_REQUEST, "The request is invalid.");
     }
 
-    @ExceptionHandler(UserProfileNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleUserProfileNotFoundException(
-            UserProfileNotFoundException ex){
-
+    private ResponseEntity<ErrorResponse> response(HttpStatus status, String message) {
         ErrorResponse error = new ErrorResponse();
-
-        error.setStatus(HttpStatus.NOT_FOUND.value());
-        error.setErrorMessage(ex.getMessage());
+        error.setStatus(status.value());
+        error.setErrorMessage(message);
         error.setTimestamp(LocalDateTime.now());
-
-        return ResponseEntity
-                .status(HttpStatus.NOT_FOUND)
-                .body(error);
+        return ResponseEntity.status(status).body(error);
     }
-
-    @ExceptionHandler(SkillNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleSkillNotFoundException(
-            SkillNotFoundException ex){
-
-        ErrorResponse error = new ErrorResponse();
-
-        error.setStatus(HttpStatus.NOT_FOUND.value());
-        error.setErrorMessage(ex.getMessage());
-        error.setTimestamp(LocalDateTime.now());
-
-        return ResponseEntity
-                .status(HttpStatus.NOT_FOUND)
-                .body(error);
-    }
-
-    @ExceptionHandler(UserProfileSkillAlreadyExistsException.class)
-    public ResponseEntity<ErrorResponse> handleUserProfileSkillAlreadyExistsException(
-            UserProfileSkillAlreadyExistsException ex){
-
-        ErrorResponse error = new ErrorResponse();
-
-        error.setStatus(HttpStatus.CONFLICT.value());
-        error.setErrorMessage(ex.getMessage());
-        error.setTimestamp(LocalDateTime.now());
-
-        return ResponseEntity
-                .status(HttpStatus.CONFLICT)
-                .body(error);
-    }
-
-    @ExceptionHandler(UserProfileSkillNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleUserProfileSkillNotFoundException(
-            UserProfileSkillNotFoundException ex){
-
-        ErrorResponse error = new ErrorResponse();
-
-        error.setStatus(HttpStatus.NOT_FOUND.value());
-        error.setErrorMessage(ex.getMessage());
-        error.setTimestamp(LocalDateTime.now());
-
-        return ResponseEntity
-                .status(HttpStatus.NOT_FOUND)
-                .body(error);
-    }
-
-    @ExceptionHandler(ResumeNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleResumeNotFoundException(
-            ResumeNotFoundException ex){
-
-        ErrorResponse error = new ErrorResponse();
-
-        error.setStatus(HttpStatus.NOT_FOUND.value());
-        error.setErrorMessage(ex.getMessage());
-        error.setTimestamp(LocalDateTime.now());
-
-        return ResponseEntity
-                .status(HttpStatus.NOT_FOUND)
-                .body(error);
-    }
-
-    @ExceptionHandler(JobVacancyNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleJobVacancyNotFoundException(
-            JobVacancyNotFoundException ex){
-
-        ErrorResponse error = new ErrorResponse();
-
-        error.setStatus(HttpStatus.NOT_FOUND.value());
-        error.setErrorMessage(ex.getMessage());
-        error.setTimestamp(LocalDateTime.now());
-
-        return ResponseEntity
-                .status(HttpStatus.NOT_FOUND)
-                .body(error);
-    }
-
-    @ExceptionHandler(JobVacancyAlreadyExistsException.class)
-    public ResponseEntity<ErrorResponse> handleJobVacancyAlreadyExistsException(
-            JobVacancyAlreadyExistsException ex){
-
-        ErrorResponse error = new ErrorResponse();
-
-        error.setStatus(HttpStatus.CONFLICT.value());
-        error.setErrorMessage(ex.getMessage());
-        error.setTimestamp(LocalDateTime.now());
-
-        return ResponseEntity
-                .status(HttpStatus.CONFLICT)
-                .body(error);
-    }
-
-    @ExceptionHandler(JobSkillAlreadyExistsException.class)
-    public ResponseEntity<ErrorResponse> handleJobSkillAlreadyExistsException(
-            JobSkillAlreadyExistsException ex){
-
-        ErrorResponse error = new ErrorResponse();
-
-        error.setStatus(HttpStatus.CONFLICT.value());
-        error.setErrorMessage(ex.getMessage());
-        error.setTimestamp(LocalDateTime.now());
-
-        return ResponseEntity
-                .status(HttpStatus.CONFLICT)
-                .body(error);
-    }
-
 }
-

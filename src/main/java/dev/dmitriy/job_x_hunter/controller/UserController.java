@@ -4,6 +4,7 @@ import dev.dmitriy.job_x_hunter.dto.CreateUserRequest;
 import dev.dmitriy.job_x_hunter.dto.UserResponseDTO;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpStatus;
 import dev.dmitriy.job_x_hunter.service.UserService;
 
 import java.util.List;
@@ -20,6 +21,7 @@ public class UserController {
     }
 
     @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
     public UserResponseDTO createUser(@Valid @RequestBody CreateUserRequest request){
         return userService.createUser(request);
     }
