@@ -6,6 +6,7 @@ import dev.dmitriy.job_x_hunter.dto.UpdateResumeRequest;
 import dev.dmitriy.job_x_hunter.service.ResumeService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpStatus;
 
 
 import java.util.List;
@@ -20,13 +21,14 @@ public class ResumeController {
     }
 
     @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
     public ResumeResponseDTO createResume(@RequestBody @Valid CreateResumeRequest request){
         return this.service.createResume(request);
     }
 
     @PatchMapping
     public ResumeResponseDTO updateResume(@RequestBody @Valid UpdateResumeRequest request){
-        return this.service.updateResume(request.getResumeId(), request.getTitle(), request.getUrl(), request.getDescription());
+        return this.service.updateResume(request);
     }
 
     @DeleteMapping("/{resumeId}")

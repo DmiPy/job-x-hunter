@@ -11,6 +11,7 @@ import dev.dmitriy.job_x_hunter.mapper.UserProfileMapper;
 import dev.dmitriy.job_x_hunter.repository.UserProfileRepository;
 import dev.dmitriy.job_x_hunter.repository.UserRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
@@ -26,6 +27,7 @@ public class UserProfileService {
         this.mapper = mapper;
     }
 
+    @Transactional
     public UserProfileResponseDTO createUserProfile(CreateUserProfileRequest dto){
         if(upRepo.findByUser_UserId(dto.getUserId()).isPresent() ){
             throw new UserProfileAlreadyExistsException("User profile for user id " + dto.getUserId() + " already exists.");

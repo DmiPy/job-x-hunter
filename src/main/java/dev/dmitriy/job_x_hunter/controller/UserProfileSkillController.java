@@ -7,6 +7,7 @@ import dev.dmitriy.job_x_hunter.dto.UserProfileSkillResponseDTO;
 import dev.dmitriy.job_x_hunter.service.UserProfileSkillService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpStatus;
 
 import java.util.List;
 
@@ -20,6 +21,7 @@ public class UserProfileSkillController {
     }
 
     @PostMapping()
+    @ResponseStatus(HttpStatus.CREATED)
     public UserProfileSkillResponseDTO createUserProfileSkill(@RequestBody @Valid CreateUserProfileSkillRequest request){
         return this.service.createUserProfileSkill(request);
     }

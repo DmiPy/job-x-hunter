@@ -6,6 +6,7 @@ import dev.dmitriy.job_x_hunter.service.UserProfileService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpStatus;
 
 import java.util.UUID;
 
@@ -19,6 +20,7 @@ public class UserProfileController {
     }
 
     @PostMapping()
+    @ResponseStatus(HttpStatus.CREATED)
     public UserProfileResponseDTO createUserProfile(@Valid @RequestBody CreateUserProfileRequest request){
         return this.service.createUserProfile(request);
     }

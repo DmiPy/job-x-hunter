@@ -22,3 +22,16 @@ databaseChangeLog:
         - sqlFile:
             path: V3__insert_test_data.sql
             relativeToChangelogFile: true
+
+  - changeSet:
+      id: 4
+      author: dmitriy
+      preConditions:
+        - onFail: HALT
+        - sqlCheck:
+            expectedResult: "0"
+            sql: SELECT COUNT(*) FROM job_vacancy WHERE title IS NULL
+      changes:
+        - sqlFile:
+            path: V4__align_job_vacancy_constraints.sql
+            relativeToChangelogFile: true

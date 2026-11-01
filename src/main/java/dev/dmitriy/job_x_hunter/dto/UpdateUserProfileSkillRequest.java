@@ -16,7 +16,8 @@ public class UpdateUserProfileSkillRequest {
     @NotNull
     private Long skillId;
 
-    @Min(1)
-    @Max(5)
+    @NotNull
+    @Min(0)
+    @Max(100)
     private Integer proficiency;
 }

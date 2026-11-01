@@ -1,0 +1,36 @@
+# Production and Testcontainers changelog.
+# The logical file path deliberately matches the original master changelog so
+# V1, V2 and V4 retain the same Liquibase identity in existing databases.
+# V3 is intentionally absent: it contains local development seed data.
+databaseChangeLog:
+  - changeSet:
+      id: 1
+      author: dmitriy
+      logicalFilePath: db/changelog/db.changelog-master.yaml
+      changes:
+        - sqlFile:
+            path: V1__init.sql
+            relativeToChangelogFile: true
+
+  - changeSet:
+      id: 2
+      author: dmitriy
+      logicalFilePath: db/changelog/db.changelog-master.yaml
+      changes:
+        - sqlFile:
+            path: V2__insert_skills.sql
+            relativeToChangelogFile: true
+
+  - changeSet:
+      id: 4
+      author: dmitriy
+      logicalFilePath: db/changelog/db.changelog-master.yaml
+      preConditions:
+        - onFail: HALT
+        - sqlCheck:
+            expectedResult: "0"
+            sql: SELECT COUNT(*) FROM job_vacancy WHERE title IS NULL
+      changes:
+        - sqlFile:
+            path: V4__align_job_vacancy_constraints.sql
+            relativeToChangelogFile: true

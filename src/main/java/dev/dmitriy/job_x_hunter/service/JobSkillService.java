@@ -15,6 +15,7 @@ import dev.dmitriy.job_x_hunter.repository.JobSkillRepository;
 import dev.dmitriy.job_x_hunter.repository.JobVacancyRepository;
 import dev.dmitriy.job_x_hunter.repository.SkillRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -44,6 +45,7 @@ public class JobSkillService {
         return srepo.findById(skillId).orElseThrow(() -> new SkillNotFoundException("Skill with an id:" + skillId + " does not exist."));
     }
 
+    @Transactional
     public JobSkillResponseDTO createJobSkill(CreateJobSkillRequest request){
         Skill skill = findOrCreateSkill(request.getSkillId());
         JobVacancy jobVacancy = findOrCreateJobVacancy(request.getJobVacancyId());

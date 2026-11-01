@@ -4,6 +4,7 @@ import dev.dmitriy.job_x_hunter.dto.*;
 import dev.dmitriy.job_x_hunter.service.JobSkillService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpStatus;
 
 import java.util.List;
 
@@ -17,6 +18,7 @@ public class JobSkillController {
     }
 
     @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
     public JobSkillResponseDTO createJobSkill(@Valid @RequestBody CreateJobSkillRequest request){
         return service.createJobSkill(request);
     }

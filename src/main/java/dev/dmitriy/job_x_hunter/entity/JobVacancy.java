@@ -2,10 +2,8 @@ package dev.dmitriy.job_x_hunter.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDate;
 
@@ -36,18 +34,19 @@ public class JobVacancy {
     private String source;
 
     @Column(name = "source_job_id")
+    @NotBlank
     private String sourceJobId;
 
     @Column(name = "post_date", updatable = false, nullable = false)
     private LocalDate postDate = LocalDate.now();
 
-    @Column(nullable = false)
+    @Column
     private String description;
 
-    @Column(nullable = false)
+    @Column
     private String company;
 
-    @Column(nullable = false)
+    @Column
     private String companyLocation;
 
 }
