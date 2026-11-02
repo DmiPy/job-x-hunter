@@ -4,12 +4,13 @@ import dev.dmitriy.job_x_hunter.dto.CreateUserProfileRequest;
 import dev.dmitriy.job_x_hunter.dto.UserProfileResponseDTO;
 import dev.dmitriy.job_x_hunter.entity.User;
 import dev.dmitriy.job_x_hunter.entity.UserProfile;
-import dev.dmitriy.job_x_hunter.exception.UserNotFoundException;
 import dev.dmitriy.job_x_hunter.exception.UserProfileAlreadyExistsException;
 import dev.dmitriy.job_x_hunter.exception.UserProfileNotFoundException;
 import dev.dmitriy.job_x_hunter.mapper.UserProfileMapper;
 import dev.dmitriy.job_x_hunter.repository.UserProfileRepository;
 import dev.dmitriy.job_x_hunter.repository.UserRepository;
+import dev.dmitriy.job_x_hunter.security.CurrentUserService;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,40 +21,43 @@ public class UserProfileService {
     private final UserProfileRepository upRepo;
     private final UserRepository uRepo;
     private final UserProfileMapper mapper;
+    private final CurrentUserService currentUser;
 
-    public UserProfileService(UserProfileRepository upRepo, UserRepository uRepo, UserProfileMapper mapper) {
+    public UserProfileService(UserProfileRepository upRepo, UserRepository uRepo, UserProfileMapper mapper, CurrentUserService currentUser) {
         this.upRepo = upRepo;
         this.uRepo = uRepo;
         this.mapper = mapper;
+        this.currentUser = currentUser;
+    }
+
+    public UserProfileResponseDTO getMyProfile(Jwt jwt) {
+        User user = currentUser.getOrProvision(jwt);
+        return getOwnedProfileByUserId(user.getUserId(), jwt);
+    }
+
+    public UserProfileResponseDTO getOwnedProfileByUserId(UUID id, Jwt jwt) {
+        if (!currentUser.getOrProvision(jwt).getUserId().equals(id)) {
+            throw new UserProfileNotFoundException("Profile not found.");
+        }
+        return mapper.toDto(upRepo.findByUser_UserId(id)
+                .orElseThrow(() -> new UserProfileNotFoundException("Profile not found.")));
     }
 
     @Transactional
-    public UserProfileResponseDTO createUserProfile(CreateUserProfileRequest dto){
-        if(upRepo.findByUser_UserId(dto.getUserId()).isPresent() ){
-            throw new UserProfileAlreadyExistsException("User profile for user id " + dto.getUserId() + " already exists.");
-        } else {
-            User user = uRepo.findById(dto.getUserId()).orElseThrow( () -> {
-                throw new UserNotFoundException("User with the id: "+ dto.getUserId() +" was not found.");
-            });
-            UserProfile userProfile = mapper.toEntity(dto);
-            userProfile.setUser(user);
-            UserProfile savedProfile = upRepo.save(userProfile);
-            return mapper.toDto(savedProfile);
+    public UserProfileResponseDTO createMyProfile(CreateUserProfileRequest request, Jwt jwt) {
+        User user = currentUser.getOrProvision(jwt);
+        if (upRepo.findByUser_UserId(user.getUserId()).isPresent()) {
+            throw new UserProfileAlreadyExistsException("Profile already exists.");
         }
-
+        UserProfile profile = mapper.toEntity(request);
+        profile.setUser(user);
+        return mapper.toDto(upRepo.save(profile));
     }
 
-    public UserProfileResponseDTO getUserProfileByUserId(UUID userId){
-        UserProfile userProfile = upRepo.findByUser_UserId(userId).orElseThrow(() -> {
-            throw new UserProfileNotFoundException("User with the id: "+ userId +" was not found.");
-        });
-        return mapper.toDto(userProfile);
+    public UserProfileResponseDTO getOwnedProfile(Long profileId, Jwt jwt) {
+        UserProfile profile = upRepo.findById(profileId).filter(p -> p.getUser().getUserId().equals(currentUser.getOrProvision(jwt).getUserId()))
+                .orElseThrow(() -> new UserProfileNotFoundException("Profile not found."));
+        return mapper.toDto(profile);
     }
 
-    public UserProfileResponseDTO getUserProfileById(Long profileId){
-        UserProfile userProfile = upRepo.findById(profileId).orElseThrow(() -> {
-            throw new UserProfileNotFoundException("User with the id: "+ profileId +" was not found.");
-        });
-        return mapper.toDto(userProfile);
-    }
 }

@@ -13,6 +13,8 @@ import dev.dmitriy.job_x_hunter.mapper.UserProfileSkillMapper;
 import dev.dmitriy.job_x_hunter.repository.SkillRepository;
 import dev.dmitriy.job_x_hunter.repository.UserProfileRepository;
 import dev.dmitriy.job_x_hunter.repository.UserProfileSkillRepository;
+import dev.dmitriy.job_x_hunter.security.CurrentUserService;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,17 +28,28 @@ public class UserProfileSkillService {
     private final UserProfileSkillRepository upsrepo;
     private final SkillRepository srepo;
     private final UserProfileSkillMapper mapper;
+    private final CurrentUserService currentUser;
 
     public UserProfileSkillService(
             UserProfileRepository uprepo,
             UserProfileSkillRepository upsrepo,
             SkillRepository srepo,
-            UserProfileSkillMapper mapper
+            UserProfileSkillMapper mapper,
+            CurrentUserService currentUser
     ) {
         this.uprepo = uprepo;
         this.upsrepo = upsrepo;
         this.srepo = srepo;
         this.mapper = mapper;
+        this.currentUser = currentUser;
+    }
+
+    private UserProfile findOwnedProfile(Long id, Jwt jwt) {
+        UserProfile profile = findUserProfile(id);
+        if (!profile.getUser().getUserId().equals(currentUser.getOrProvision(jwt).getUserId())) {
+            throw new UserProfileNotFoundException("Profile not found.");
+        }
+        return profile;
     }
 
     private UserProfile findUserProfile(Long id){
@@ -68,8 +81,8 @@ public class UserProfileSkillService {
     }
 
     @Transactional
-    public UserProfileSkillResponseDTO createUserProfileSkill(CreateUserProfileSkillRequest dto){
-        UserProfile userProfile = findUserProfile(dto.getUserProfileId());
+    public UserProfileSkillResponseDTO createUserProfileSkill(CreateUserProfileSkillRequest dto, Jwt jwt){
+        UserProfile userProfile = findOwnedProfile(dto.getUserProfileId(), jwt);
         Skill skill = findOrCreateSkill(dto.getSkillName());
         validateDuplicateSkill(userProfile.getUserProfileId(), skill.getSkillId(), dto.getSkillName());
 
@@ -83,8 +96,8 @@ public class UserProfileSkillService {
         return mapper.toDto(upSkill);
     }
 
-    public List<UserProfileSkillResponseDTO> getAllSkillsByUserProfileId(Long profileId){
-        findUserProfile(profileId);
+    public List<UserProfileSkillResponseDTO> getAllSkillsByUserProfileId(Long profileId, Jwt jwt){
+        findOwnedProfile(profileId, jwt);
         List<UserProfileSkill> skillsEntityList = upsrepo.findByUserProfile_UserProfileId(profileId);
         List<UserProfileSkillResponseDTO> skillsDtoList = new ArrayList<>();
         for( UserProfileSkill skill : skillsEntityList){
@@ -98,8 +111,9 @@ public class UserProfileSkillService {
             Long profileId,
             Long skillId,
             Integer newProficiency
+            , Jwt jwt
     ){
-        findUserProfile(profileId);
+        findOwnedProfile(profileId, jwt);
         UserProfileSkill upSkill = findUserProfileSkill(profileId, skillId);
         upSkill.setProficiency(newProficiency);
         upSkill = upsrepo.save(upSkill);
@@ -107,8 +121,8 @@ public class UserProfileSkillService {
     }
 
     @Transactional
-    public UserProfileSkillResponseDTO deleteUserProfileSkill(Long profileId, Long skillId){
-        findUserProfile(profileId);
+    public UserProfileSkillResponseDTO deleteUserProfileSkill(Long profileId, Long skillId, Jwt jwt){
+        findOwnedProfile(profileId, jwt);
         UserProfileSkill upSkill = findUserProfileSkill(profileId, skillId);
         UserProfileSkillResponseDTO dto = mapper.toDto(upSkill);
         upsrepo.delete(upSkill);
@@ -118,8 +132,9 @@ public class UserProfileSkillService {
     public UserProfileSkillResponseDTO getUserProfileSkill(
             Long profileId,
             Long skillId
+            , Jwt jwt
     ) {
-        findUserProfile(profileId);
+        findOwnedProfile(profileId, jwt);
         return mapper.toDto(findUserProfileSkill(profileId, skillId));
     }
 }

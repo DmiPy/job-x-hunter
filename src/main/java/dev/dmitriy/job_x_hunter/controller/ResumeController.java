@@ -10,6 +10,8 @@ import org.springframework.http.HttpStatus;
 
 
 import java.util.List;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 
 @RestController
 @RequestMapping("/resumes")
@@ -22,27 +24,30 @@ public class ResumeController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ResumeResponseDTO createResume(@RequestBody @Valid CreateResumeRequest request){
-        return this.service.createResume(request);
+    public ResumeResponseDTO createResume(@RequestBody @Valid CreateResumeRequest request, @AuthenticationPrincipal Jwt jwt){
+        return this.service.createResumeForCurrentUser(request, jwt);
     }
 
+    @GetMapping("/me")
+    public List<ResumeResponseDTO> getMyResumes(@AuthenticationPrincipal Jwt jwt) { return service.getMyResumes(jwt); }
+
     @PatchMapping
-    public ResumeResponseDTO updateResume(@RequestBody @Valid UpdateResumeRequest request){
-        return this.service.updateResume(request);
+    public ResumeResponseDTO updateResume(@RequestBody @Valid UpdateResumeRequest request, @AuthenticationPrincipal Jwt jwt){
+        return this.service.updateResume(request, jwt);
     }
 
     @DeleteMapping("/{resumeId}")
-    public ResumeResponseDTO deleteResume(@PathVariable Long resumeId){
-        return this.service.deleteResume(resumeId);
+    public ResumeResponseDTO deleteResume(@PathVariable Long resumeId, @AuthenticationPrincipal Jwt jwt){
+        return this.service.deleteResume(resumeId, jwt);
     }
 
     @GetMapping("/{resumeId}")
-    public ResumeResponseDTO getResumeById(@PathVariable Long resumeId){
-        return this.service.getResumeById(resumeId);
+    public ResumeResponseDTO getResumeById(@PathVariable Long resumeId, @AuthenticationPrincipal Jwt jwt){
+        return this.service.getResumeById(resumeId, jwt);
     }
 
     @GetMapping("/profile/{profileId}")
-    public List<ResumeResponseDTO> getAllResumesByProfileId(@PathVariable Long profileId){
-        return this.service.getAllResumesByProfileId(profileId);
+    public List<ResumeResponseDTO> getAllResumesByProfileId(@PathVariable Long profileId, @AuthenticationPrincipal Jwt jwt){
+        return this.service.getResumesByProfileId(profileId, jwt);
     }
 }

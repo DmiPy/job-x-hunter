@@ -34,3 +34,12 @@ databaseChangeLog:
         - sqlFile:
             path: V4__align_job_vacancy_constraints.sql
             relativeToChangelogFile: true
+
+  - changeSet:
+      id: 5
+      author: dmitriy
+      logicalFilePath: db/changelog/db.changelog-master.yaml
+      changes:
+        - sqlFile:
+            path: V5__keycloak_identity.sql
+            relativeToChangelogFile: true

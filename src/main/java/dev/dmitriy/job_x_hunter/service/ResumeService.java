@@ -10,6 +10,8 @@ import dev.dmitriy.job_x_hunter.exception.UserProfileNotFoundException;
 import dev.dmitriy.job_x_hunter.mapper.ResumeMapper;
 import dev.dmitriy.job_x_hunter.repository.ResumeRepository;
 import dev.dmitriy.job_x_hunter.repository.UserProfileRepository;
+import dev.dmitriy.job_x_hunter.security.CurrentUserService;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,11 +26,13 @@ public class ResumeService {
     private final ResumeRepository rrepo;
 
     private final ResumeMapper mapper;
+    private final CurrentUserService currentUser;
 
-    public ResumeService(ResumeRepository rrepo, UserProfileRepository uprepo, ResumeMapper mapper){
+    public ResumeService(ResumeRepository rrepo, UserProfileRepository uprepo, ResumeMapper mapper, CurrentUserService currentUser){
         this.rrepo = rrepo;
         this.uprepo = uprepo;
         this.mapper = mapper;
+        this.currentUser = currentUser;
     }
 
     private UserProfile findUserProfile(Long id){
@@ -42,9 +46,10 @@ public class ResumeService {
     }
 
     @Transactional
-    public ResumeResponseDTO createResume(CreateResumeRequest request){
+    public ResumeResponseDTO createResumeForCurrentUser(CreateResumeRequest request, Jwt jwt){
         Resume newResume = mapper.toEntity(request);
-        UserProfile up = findUserProfile(request.getUserProfileId());
+        UserProfile up = uprepo.findByUser_UserId(currentUser.getOrProvision(jwt).getUserId())
+                .orElseThrow(() -> new UserProfileNotFoundException("Profile not found."));
         newResume.setUserProfile(up);
         newResume.setUrl("/");
         newResume = rrepo.save(newResume);
@@ -52,8 +57,9 @@ public class ResumeService {
     }
 
     @Transactional
-    public ResumeResponseDTO updateResume(UpdateResumeRequest request){
+    public ResumeResponseDTO updateResume(UpdateResumeRequest request, Jwt jwt){
         Resume resume = findResume(request.getResumeId());
+        assertOwner(resume, jwt);
         if (request.isTitleProvided()) {
             resume.setTitle(request.getTitle());
         }
@@ -68,25 +74,37 @@ public class ResumeService {
     }
 
     @Transactional
-    public ResumeResponseDTO deleteResume(Long resumeId){
+    public ResumeResponseDTO deleteResume(Long resumeId, Jwt jwt){
         Resume resume = findResume(resumeId);
+        assertOwner(resume, jwt);
         ResumeResponseDTO dto = mapper.toDto(resume);
         rrepo.delete(resume);
         return dto;
     }
 
-    public ResumeResponseDTO getResumeById(Long resumeId){
-        return mapper.toDto(findResume(resumeId));
+    public ResumeResponseDTO getResumeById(Long resumeId, Jwt jwt){
+        Resume resume = findResume(resumeId);
+        assertOwner(resume, jwt);
+        return mapper.toDto(resume);
     }
 
-    public List<ResumeResponseDTO> getAllResumesByProfileId(Long profileId){
-        findUserProfile(profileId);
-        List<Resume> resumes = rrepo.findByUserProfile_UserProfileId(profileId);
-        List<ResumeResponseDTO> resumesDtoList = new ArrayList<>();
-        for(Resume r: resumes){
-            resumesDtoList.add(mapper.toDto(r));
+    public List<ResumeResponseDTO> getMyResumes(Jwt jwt) {
+        Long profileId = uprepo.findByUser_UserId(currentUser.getOrProvision(jwt).getUserId())
+                .orElseThrow(() -> new UserProfileNotFoundException("Profile not found.")).getUserProfileId();
+        return rrepo.findByUserProfile_UserProfileId(profileId).stream().map(mapper::toDto).toList();
+    }
+
+    public List<ResumeResponseDTO> getResumesByProfileId(Long profileId, Jwt jwt) {
+        UserProfile profile = uprepo.findById(profileId)
+                .filter(p -> p.getUser().getUserId().equals(currentUser.getOrProvision(jwt).getUserId()))
+                .orElseThrow(() -> new UserProfileNotFoundException("Profile not found."));
+        return rrepo.findByUserProfile_UserProfileId(profile.getUserProfileId()).stream().map(mapper::toDto).toList();
+    }
+
+    private void assertOwner(Resume resume, Jwt jwt) {
+        if (jwt == null || !resume.getUserProfile().getUser().getUserId().equals(currentUser.getOrProvision(jwt).getUserId())) {
+            throw new ResumeNotFoundException("Resume not found.");
         }
-        return resumesDtoList;
     }
 
 

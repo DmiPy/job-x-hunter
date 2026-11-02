@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.http.HttpStatus;
 
 import java.util.UUID;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 
 @RestController
 @RequestMapping("/profiles")
@@ -21,17 +23,20 @@ public class UserProfileController {
 
     @PostMapping()
     @ResponseStatus(HttpStatus.CREATED)
-    public UserProfileResponseDTO createUserProfile(@Valid @RequestBody CreateUserProfileRequest request){
-        return this.service.createUserProfile(request);
+    public UserProfileResponseDTO createUserProfile(@Valid @RequestBody CreateUserProfileRequest request, @AuthenticationPrincipal Jwt jwt){
+        return this.service.createMyProfile(request, jwt);
     }
 
+    @GetMapping("/me")
+    public UserProfileResponseDTO getMyProfile(@AuthenticationPrincipal Jwt jwt) { return service.getMyProfile(jwt); }
+
     @GetMapping("/user/{userId}")
-    public UserProfileResponseDTO getUserProfileByUserId(@PathVariable UUID userId){
-        return this.service.getUserProfileByUserId(userId);
+    public UserProfileResponseDTO getUserProfileByUserId(@PathVariable UUID userId, @AuthenticationPrincipal Jwt jwt){
+        return this.service.getOwnedProfileByUserId(userId, jwt);
     }
 
     @GetMapping("/{profileId}")
-    public UserProfileResponseDTO getUserProfileById(@PathVariable Long profileId){
-        return this.service.getUserProfileById(profileId);
+    public UserProfileResponseDTO getUserProfileById(@PathVariable Long profileId, @AuthenticationPrincipal Jwt jwt){
+        return this.service.getOwnedProfile(profileId, jwt);
     }
 }
