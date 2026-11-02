@@ -8,6 +8,7 @@ import dev.dmitriy.job_x_hunter.enums.Role;
 import dev.dmitriy.job_x_hunter.repository.ResumeRepository;
 import dev.dmitriy.job_x_hunter.repository.UserProfileRepository;
 import dev.dmitriy.job_x_hunter.repository.UserRepository;
+import dev.dmitriy.job_x_hunter.security.CurrentUserService;
 import liquibase.Contexts;
 import liquibase.Liquibase;
 import liquibase.database.Database;
@@ -18,6 +19,7 @@ import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -34,11 +36,20 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import org.springframework.security.oauth2.jwt.Jwt;
+import java.time.Instant;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -75,6 +86,9 @@ class JobXHunterApplicationTests {
     private UserRepository userRepository;
 
     @Autowired
+    private CurrentUserService currentUserService;
+
+    @Autowired
     private UserProfileRepository userProfileRepository;
 
     @Autowired
@@ -88,6 +102,41 @@ class JobXHunterApplicationTests {
         assertEquals(5, jdbcTemplate.queryForObject("SELECT COUNT(*) FROM skill", Integer.class));
         assertEquals(0, jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM databasechangelog WHERE id = '3'", Integer.class));
+    }
+
+    @Test
+    @Order(1)
+    void requiresAuthenticationForPrivateEndpointsAndLeavesVacancyBrowsePublic() throws Exception {
+        mockMvc.perform(get("/profiles/me")).andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/job-vacancies")).andExpect(status().isOk());
+    }
+
+    @Test
+    @Order(1)
+    void deniesUserRoleOnAdministrativeVacancyCreation() throws Exception {
+        mockMvc.perform(post("/job-vacancies")
+                        .with(jwt().jwt(token -> token.claim("realm_access", java.util.Map.of("roles", java.util.List.of("USER")))))
+                        .contentType("application/json")
+                        .content("{}"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @Order(1)
+    void rejectsMissingVerifiedIdentityAndApplicationRole() throws Exception {
+        mockMvc.perform(get("/users/me").with(jwt().jwt(token -> token
+                        .issuer("https://issuer.test/realm").subject("missing-email")
+                        .claim("realm_access", java.util.Map.of("roles", java.util.List.of("USER"))))))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/users/me").with(jwt().jwt(token -> token
+                        .issuer("https://issuer.test/realm").subject("unverified")
+                        .claim("email", "unverified@example.test").claim("email_verified", false)
+                        .claim("realm_access", java.util.Map.of("roles", java.util.List.of("USER"))))))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/users/me").with(jwt().jwt(token -> token
+                        .issuer("https://issuer.test/realm").subject("no-role")
+                        .claim("email", "no-role@example.test").claim("email_verified", true))))
+                .andExpect(status().isForbidden());
     }
 
     @Test
@@ -119,11 +168,13 @@ class JobXHunterApplicationTests {
         String payload = objectMapper.writeValueAsString(new VacancyRequest(sourceJobId));
 
         mockMvc.perform(post("/job-vacancies")
+                        .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMIN")))
                         .contentType("application/json")
                         .content(payload))
                 .andExpect(status().isCreated());
 
         mockMvc.perform(post("/job-vacancies")
+                        .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMIN")))
                         .contentType("application/json")
                         .content(payload))
                 .andExpect(status().isConflict())
@@ -134,6 +185,7 @@ class JobXHunterApplicationTests {
     @Order(5)
     void rejectsSkillProficiencyOutsideTheConfiguredPercentageRange() throws Exception {
         mockMvc.perform(post("/user-profile-skill")
+                        .with(jwt().jwt(token -> token.claim("realm_access", java.util.Map.of("roles", java.util.List.of("USER")))))
                         .contentType("application/json")
                         .content("{\"userProfileId\":1,\"skillName\":\"Validation test\",\"proficiency\":101}"))
                 .andExpect(status().isBadRequest())
@@ -143,9 +195,14 @@ class JobXHunterApplicationTests {
     @Test
     @Order(6)
     void preservesOmittedResumeFieldsAndRejectsExplicitNullForMandatoryFields() throws Exception {
-        Resume resume = createResume();
+        Resume resume = createResume("resume-test-subject");
+        var ownerJwt = jwt().jwt(token -> token.issuer("https://issuer.test/realm")
+                .subject("resume-test-subject").claim("email", "resume-test@example.test")
+                .claim("email_verified", true)
+                .claim("realm_access", java.util.Map.of("roles", java.util.List.of("USER"))));
 
         mockMvc.perform(patch("/resumes")
+                        .with(ownerJwt)
                         .contentType("application/json")
                         .content("{\"resumeId\":" + resume.getResumeId() + ",\"description\":\"Updated\"}"))
                 .andExpect(status().isOk())
@@ -154,10 +211,144 @@ class JobXHunterApplicationTests {
                 .andExpect(jsonPath("$.description").value("Updated"));
 
         mockMvc.perform(patch("/resumes")
+                        .with(ownerJwt)
                         .contentType("application/json")
                         .content("{\"resumeId\":" + resume.getResumeId() + ",\"title\":null}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400));
+    }
+
+    @Test
+    @Order(7)
+    void secondUserCannotAccessOrChangeFirstUsersPrivateResources() throws Exception {
+        Resume resume = createResume("idor-owner-subject");
+        Long resumeId = resume.getResumeId();
+        Long profileId = resume.getUserProfile().getUserProfileId();
+        UUID ownerUserId = resume.getUserProfile().getUser().getUserId();
+        var owner = jwt().jwt(token -> token.issuer("https://issuer.test/realm")
+                .subject("idor-owner-subject").claim("email", "owner@example.test")
+                .claim("email_verified", true)
+                .claim("realm_access", java.util.Map.of("roles", java.util.List.of("USER"))));
+        var other = jwt().jwt(token -> token.issuer("https://issuer.test/realm")
+                .subject("other-subject").claim("email", "other@example.test")
+                .claim("email_verified", true)
+                .claim("realm_access", java.util.Map.of("roles", java.util.List.of("USER"))));
+
+        mockMvc.perform(get("/resumes/{id}", resumeId).with(owner)).andExpect(status().isOk());
+        mockMvc.perform(get("/profiles/{id}", profileId).with(owner)).andExpect(status().isOk());
+        mockMvc.perform(get("/profiles/user/{id}", ownerUserId).with(owner)).andExpect(status().isOk());
+        mockMvc.perform(get("/resumes/{id}", resumeId).with(other)).andExpect(status().isNotFound());
+        mockMvc.perform(patch("/resumes").with(other).contentType("application/json")
+                .content("{\"resumeId\":" + resumeId + ",\"title\":\"stolen\"}"))
+                .andExpect(status().isNotFound());
+        mockMvc.perform(delete("/resumes/{id}", resumeId).with(other)).andExpect(status().isNotFound());
+        mockMvc.perform(get("/profiles/{id}", profileId).with(other)).andExpect(status().isNotFound());
+        mockMvc.perform(get("/profiles/user/{id}", ownerUserId).with(other)).andExpect(status().isNotFound());
+        mockMvc.perform(post("/user-profile-skill").with(other).contentType("application/json")
+                .content("{\"userProfileId\":" + profileId + ",\"skillName\":\"Java\",\"proficiency\":50}"))
+                .andExpect(status().isNotFound());
+
+        mockMvc.perform(post("/user-profile-skill").with(owner).contentType("application/json")
+                .content("{\"userProfileId\":" + profileId + ",\"skillName\":\"Java\",\"proficiency\":50}"))
+                .andExpect(status().isCreated());
+        Long skillId = jdbcTemplate.queryForObject("SELECT skill_id FROM skill WHERE skill_name = 'Java'", Long.class);
+        mockMvc.perform(get("/user-profile-skill/profile/{id}", profileId).with(other))
+                .andExpect(status().isNotFound());
+        mockMvc.perform(patch("/user-profile-skill").with(other).contentType("application/json")
+                .content("{\"profileId\":" + profileId + ",\"skillId\":" + skillId + ",\"proficiency\":99}"))
+                .andExpect(status().isNotFound());
+        mockMvc.perform(delete("/user-profile-skill").with(other).contentType("application/json")
+                .content("{\"userProfileId\":" + profileId + ",\"skillId\":" + skillId + "}"))
+                .andExpect(status().isNotFound());
+
+        assertEquals("Original title", resumeRepository.findById(resumeId).orElseThrow().getTitle());
+        assertEquals("Resume", userProfileRepository.findById(profileId).orElseThrow().getFirstname());
+        assertEquals(50, jdbcTemplate.queryForObject(
+                "SELECT proficiency FROM user_profile_skill WHERE user_profile_id = ? AND skill_id = ?",
+                Integer.class, profileId, skillId));
+    }
+
+    @Test
+    @Order(8)
+    void concurrentFirstLoginCreatesExactlyOneInternalUser() throws Exception {
+        String subject = "concurrent-" + UUID.randomUUID();
+        String issuer = "https://issuer.test/realm";
+        Jwt firstToken = Jwt.withTokenValue("test-one").header("alg", "none")
+                .issuer(issuer).subject(subject)
+                .issuedAt(Instant.now()).expiresAt(Instant.now().plusSeconds(300))
+                .claim("email", subject + "-one@example.test")
+                .claim("email_verified", true)
+                .claim("realm_access", java.util.Map.of("roles", java.util.List.of("USER")))
+                .build();
+        Jwt secondToken = Jwt.withTokenValue("test-two").header("alg", "none")
+                .issuer(issuer).subject(subject)
+                .issuedAt(Instant.now()).expiresAt(Instant.now().plusSeconds(300))
+                .claim("email", subject + "-two@example.test")
+                .claim("email_verified", true)
+                .claim("realm_access", java.util.Map.of("roles", java.util.List.of("USER")))
+                .build();
+        CountDownLatch start = new CountDownLatch(1);
+        try (var executor = Executors.newFixedThreadPool(2)) {
+            var first = executor.submit(() -> { start.await(); return currentUserService.getOrProvision(firstToken).getUserId(); });
+            var second = executor.submit(() -> { start.await(); return currentUserService.getOrProvision(secondToken).getUserId(); });
+            start.countDown();
+            assertEquals(first.get(20, TimeUnit.SECONDS), second.get(20, TimeUnit.SECONDS));
+        }
+        assertEquals(1, jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM users WHERE auth_issuer = ? AND auth_subject = ?",
+                Integer.class, issuer, subject));
+        assertThrows(DataIntegrityViolationException.class, () -> jdbcTemplate.update(
+                "INSERT INTO users (user_id, email, user_role, auth_issuer, auth_subject) VALUES (?, ?, 'USER', ?, ?)",
+                UUID.randomUUID(), subject + "-third@example.test", issuer, subject));
+    }
+
+    @Test
+    @Order(8)
+    void authenticatedUserCreatesOwnProfileAndResumeThroughApi() throws Exception {
+        String subject = "new-owner-" + UUID.randomUUID();
+        String email = subject + "@example.test";
+        var owner = jwt().jwt(token -> token.issuer("https://issuer.test/realm")
+                .subject(subject)
+                .claim("email", email)
+                .claim("email_verified", true)
+                .claim("realm_access", java.util.Map.of("roles", java.util.List.of("USER"))));
+        var profileResponse = mockMvc.perform(post("/profiles").with(owner)
+                        .contentType("application/json")
+                        .content("{\"firstname\":\"Alice\",\"surname\":\"Tester\"}"))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse();
+        Long profileId = objectMapper.readTree(profileResponse.getContentAsString()).get("userProfileId").asLong();
+        var resumeResponse = mockMvc.perform(post("/resumes").with(owner)
+                        .contentType("application/json")
+                        .content("{\"title\":\"My resume\"}"))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse();
+        Long resumeId = objectMapper.readTree(resumeResponse.getContentAsString()).get("resumeId").asLong();
+        mockMvc.perform(get("/profiles/{id}", profileId).with(owner))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.firstname").value("Alice"));
+        mockMvc.perform(get("/resumes/{id}", resumeId).with(owner))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.title").value("My resume"));
+    }
+
+    @Test
+    @Order(9)
+    @EnabledIfEnvironmentVariable(named = "KEYCLOAK_USER_TEST_TOKEN", matches = ".+")
+    void realKeycloakTokensAreValidatedAndRolesAreEnforced() throws Exception {
+        String userToken = System.getenv("KEYCLOAK_USER_TEST_TOKEN");
+        String adminToken = System.getenv("KEYCLOAK_ADMIN_TEST_TOKEN");
+        assertEquals(200, mockMvc.perform(get("/users/me").header("Authorization", "Bearer " + userToken))
+                .andReturn().getResponse().getStatus());
+        assertEquals(403, mockMvc.perform(get("/users").header("Authorization", "Bearer " + userToken))
+                .andReturn().getResponse().getStatus());
+        assertEquals(200, mockMvc.perform(get("/users").header("Authorization", "Bearer " + adminToken))
+                .andReturn().getResponse().getStatus());
+        assertEquals(401, mockMvc.perform(get("/users/me").header("Authorization", "Bearer invalid-token"))
+                .andReturn().getResponse().getStatus());
+        String wrongAudienceToken = System.getenv("KEYCLOAK_WRONG_AUDIENCE_TEST_TOKEN");
+        if (wrongAudienceToken != null) {
+            assertEquals(401, mockMvc.perform(get("/users/me").header("Authorization", "Bearer " + wrongAudienceToken))
+                    .andReturn().getResponse().getStatus());
+        }
     }
 
     private void updateLiquibase(String changelog) throws Exception {
@@ -174,11 +365,13 @@ class JobXHunterApplicationTests {
         }
     }
 
-    private Resume createResume() {
+    private Resume createResume(String subject) {
         User user = new User();
         user.setUserId(UUID.randomUUID());
         user.setEmail("resume-" + UUID.randomUUID() + "@example.test");
         user.setUserRole(Role.USER);
+        user.setAuthIssuer("https://issuer.test/realm");
+        user.setAuthSubject(subject);
         user = userRepository.save(user);
 
         UserProfile profile = new UserProfile();

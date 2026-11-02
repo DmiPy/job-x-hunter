@@ -21,6 +21,12 @@ public class User {
     @Column(name="email" ,nullable = false, unique = true)
     private String email;
 
+    @Column(name = "auth_issuer")
+    private String authIssuer;
+
+    @Column(name = "auth_subject")
+    private String authSubject;
+
     @Enumerated(EnumType.STRING)
     @Column(name="user_role", nullable = false)
     private Role userRole;
@@ -38,6 +44,11 @@ public class User {
     public String getEmail() {
         return email;
     }
+
+    public String getAuthIssuer() { return authIssuer; }
+    public String getAuthSubject() { return authSubject; }
+    public void setAuthIssuer(String authIssuer) { this.authIssuer = authIssuer; }
+    public void setAuthSubject(String authSubject) { this.authSubject = authSubject; }
 
     public Role getUserRole() {
         return userRole;

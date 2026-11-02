@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.http.HttpStatus;
 
 import java.util.List;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 
 @RestController
 @RequestMapping("/user-profile-skill")
@@ -22,29 +24,29 @@ public class UserProfileSkillController {
 
     @PostMapping()
     @ResponseStatus(HttpStatus.CREATED)
-    public UserProfileSkillResponseDTO createUserProfileSkill(@RequestBody @Valid CreateUserProfileSkillRequest request){
-        return this.service.createUserProfileSkill(request);
+    public UserProfileSkillResponseDTO createUserProfileSkill(@RequestBody @Valid CreateUserProfileSkillRequest request, @AuthenticationPrincipal Jwt jwt){
+        return this.service.createUserProfileSkill(request, jwt);
     }
 
     @GetMapping("/profile/{profileId}")
-    public List<UserProfileSkillResponseDTO> getAllSkillsByUserProfileId(@PathVariable Long profileId){
-        return this.service.getAllSkillsByUserProfileId(profileId);
+    public List<UserProfileSkillResponseDTO> getAllSkillsByUserProfileId(@PathVariable Long profileId, @AuthenticationPrincipal Jwt jwt){
+        return this.service.getAllSkillsByUserProfileId(profileId, jwt);
     }
 
     @PatchMapping()
-    public UserProfileSkillResponseDTO updateProficiency(@RequestBody @Valid UpdateUserProfileSkillRequest request){
+    public UserProfileSkillResponseDTO updateProficiency(@RequestBody @Valid UpdateUserProfileSkillRequest request, @AuthenticationPrincipal Jwt jwt){
         return this.service.updateProficiency(
                 request.getProfileId(),
                 request.getSkillId(),
-                request.getProficiency()
+                request.getProficiency(), jwt
         );
     }
 
     @DeleteMapping()
-    public UserProfileSkillResponseDTO deleteUserProfileSkill(@RequestBody @Valid UserProfileSkillIdDTO dto){
+    public UserProfileSkillResponseDTO deleteUserProfileSkill(@RequestBody @Valid UserProfileSkillIdDTO dto, @AuthenticationPrincipal Jwt jwt){
         return this.service.deleteUserProfileSkill(
                 dto.getUserProfileId(),
-                dto.getSkillId()
+                dto.getSkillId(), jwt
         );
     }
 
@@ -52,7 +54,8 @@ public class UserProfileSkillController {
     public UserProfileSkillResponseDTO getUserProfileSkill(
             @PathVariable Long profileId,
             @PathVariable Long skillId
+            , @AuthenticationPrincipal Jwt jwt
     ){
-        return this.service.getUserProfileSkill(profileId, skillId);
+        return this.service.getUserProfileSkill(profileId, skillId, jwt);
     }
 }

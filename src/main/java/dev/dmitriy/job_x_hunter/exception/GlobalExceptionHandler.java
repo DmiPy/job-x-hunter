@@ -3,6 +3,8 @@ package dev.dmitriy.job_x_hunter.exception;
 import dev.dmitriy.job_x_hunter.dto.ErrorResponse;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.access.AccessDeniedException;
+import dev.dmitriy.job_x_hunter.security.InvalidIdentityClaimsException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -15,6 +17,16 @@ import java.time.LocalDateTime;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(InvalidIdentityClaimsException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidIdentity(InvalidIdentityClaimsException ex) {
+        return response(HttpStatus.UNAUTHORIZED, "The access token lacks required verified identity claims.");
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleForbidden(AccessDeniedException ex) {
+        return response(HttpStatus.FORBIDDEN, "You are not allowed to perform this operation.");
+    }
 
     @ExceptionHandler({
             UserNotFoundException.class,

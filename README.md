@@ -96,3 +96,25 @@ be running before executing:
 
 The tests dynamically provide their datasource and never use the local or
 production database configuration.
+
+## Keycloak local authentication
+
+Copy `.env.example` to `.env`, replace the local placeholder passwords, then
+start the stack with `docker compose up --build`. Keycloak imports the
+development-only `jobxhunter` realm at `http://localhost:8180`; the admin
+console is at `/admin/`. Create a user in the realm, verify its email, and
+assign the `USER` realm role. The Angular client `jobxhunter-angular` is public
+and requires Authorization Code flow with PKCE method `S256`.
+
+For an API token, use a local OIDC client such as Postman configured for
+Authorization Code + PKCE, issuer `http://localhost:8180/realms/jobxhunter`,
+client ID `jobxhunter-angular`, and callback
+`https://oauth.pstmn.io/v1/callback` (or the Angular localhost callback).
+Request `openid profile email` scopes and send the access token as `Authorization: Bearer …`.
+Example: `curl -H "Authorization: Bearer $TOKEN" http://localhost:8080/profiles/me`.
+The access token must contain verified `email`, `sub`, the `USER` or `ADMIN`
+realm role, and the `jobxhunter-api` audience. The development client includes
+Keycloak's `basic` scope for `sub` and an API audience mapper.
+Production must set its own `KEYCLOAK_ISSUER_URI`, `KEYCLOAK_JWK_SET_URI`,
+`KEYCLOAK_AUDIENCE`, and allowed CORS origins;
+the development realm and its redirect URIs are for local use only.
