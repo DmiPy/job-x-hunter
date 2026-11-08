@@ -351,6 +351,80 @@ class JobXHunterApplicationTests {
         }
     }
 
+    @Test
+    @Order(10)
+    void searchFiltersArePrivateValidatedAndPersisted() throws Exception {
+        var a = testJwt("filter-a-" + UUID.randomUUID());
+        var b = testJwt("filter-b-" + UUID.randomUUID());
+        var noProfile = testJwt("filter-no-profile-" + UUID.randomUUID());
+        String path = "/api/search-filters/me";
+        mockMvc.perform(get(path)).andExpect(status().isUnauthorized());
+        mockMvc.perform(get(path).with(noProfile)).andExpect(status().isNotFound());
+        mockMvc.perform(patch(path).with(noProfile).contentType("application/json").content("{}"))
+                .andExpect(status().isNotFound());
+        mockMvc.perform(delete(path).with(noProfile)).andExpect(status().isNotFound());
+        mockMvc.perform(post("/profiles").with(a).contentType("application/json")
+                .content("{\"firstname\":\"A\",\"surname\":\"Tester\"}"))
+                .andExpect(status().isCreated());
+        mockMvc.perform(post("/profiles").with(b).contentType("application/json")
+                .content("{\"firstname\":\"B\",\"surname\":\"Tester\"}"))
+                .andExpect(status().isCreated());
+        Long skill1 = jdbcTemplate.queryForObject("SELECT MIN(skill_id) FROM skill", Long.class);
+        Long skill2 = jdbcTemplate.queryForObject("SELECT MIN(skill_id) FROM skill WHERE skill_id > ?", Long.class, skill1);
+        String create = "{\"preferredLocation\":\"Berlin\",\"radiusKm\":30,\"minimumSalary\":60000,"
+                + "\"employmentTypes\":[\"FULL_TIME\",\"PART_TIME\"],\"workplaceTypes\":[\"REMOTE\",\"HYBRID\"],"
+                + "\"preferredSkillIds\":[" + skill1 + "],\"excludedSkillIds\":[" + skill2 + "]}";
+        mockMvc.perform(post(path).with(a).contentType("application/json").content(create))
+                .andExpect(status().isCreated()).andExpect(jsonPath("$.salaryCurrency").value("EUR"))
+                .andExpect(jsonPath("$.salaryPeriod").value("ANNUAL_GROSS"));
+        mockMvc.perform(post(path).with(a).contentType("application/json").content("{}"))
+                .andExpect(status().isConflict());
+        mockMvc.perform(get(path).with(b)).andExpect(status().isNotFound());
+        mockMvc.perform(patch(path).with(b).contentType("application/json").content("{\"keywords\":\"stolen\"}"))
+                .andExpect(status().isNotFound());
+        mockMvc.perform(delete(path).with(b)).andExpect(status().isNotFound());
+        mockMvc.perform(get(path).with(a)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.preferredLocation").value("Berlin"))
+                .andExpect(jsonPath("$.preferredSkillIds[0]").value(skill1))
+                .andExpect(jsonPath("$.excludedSkillIds[0]").value(skill2))
+                .andExpect(jsonPath("$.employmentTypes.length()").value(2))
+                .andExpect(jsonPath("$.workplaceTypes.length()").value(2));
+        assertEquals(1, jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM search_filter_preferred_skill WHERE skill_id = ?", Integer.class, skill1));
+        assertEquals(1, jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM search_filter_prohibited_skill WHERE skill_id = ?", Integer.class, skill2));
+        mockMvc.perform(patch(path).with(a).contentType("application/json")
+                .content("{\"keywords\":\"Java\",\"excludedSkillIds\":null,\"employmentTypes\":[]}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.minimumSalary").value(60000))
+                .andExpect(jsonPath("$.preferredLocation").value("Berlin"))
+                .andExpect(jsonPath("$.employmentTypes").isEmpty())
+                .andExpect(jsonPath("$.excludedSkillIds").isEmpty());
+        mockMvc.perform(patch(path).with(a).contentType("application/json")
+                .content("{\"minimumSalary\":null,\"preferredLocation\":null}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.minimumSalary").doesNotExist());
+        mockMvc.perform(patch(path).with(a).contentType("application/json")
+                .content("{\"radiusKm\":-1}")) .andExpect(status().isBadRequest());
+        mockMvc.perform(patch(path).with(a).contentType("application/json")
+                .content("{\"minimumSalary\":-1}")) .andExpect(status().isBadRequest());
+        mockMvc.perform(patch(path).with(a).contentType("application/json")
+                .content("{\"excludedSkillIds\":[" + skill1 + "]}")) .andExpect(status().isBadRequest());
+        mockMvc.perform(get(path).with(a)).andExpect(jsonPath("$.preferredSkillIds[0]").value(skill1));
+        Long profileId = jdbcTemplate.queryForObject("SELECT user_profile_id FROM search_filter", Long.class);
+        assertThrows(DataIntegrityViolationException.class, () -> jdbcTemplate.update(
+                "INSERT INTO search_filter (user_profile_id) VALUES (?)", profileId));
+        mockMvc.perform(post(path).with(b).contentType("application/json").content("{}"))
+                .andExpect(status().isCreated());
+        mockMvc.perform(delete(path).with(a)).andExpect(status().isNoContent());
+        mockMvc.perform(get(path).with(a)).andExpect(status().isNotFound());
+        mockMvc.perform(get(path).with(b)).andExpect(status().isOk());
+    }
+
+    private org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.JwtRequestPostProcessor testJwt(String subject) {
+        return jwt().jwt(token -> token.issuer("https://issuer.test/realm").subject(subject)
+                .claim("email", subject + "@example.test").claim("email_verified", true)
+                .claim("realm_access", java.util.Map.of("roles", java.util.List.of("USER"))));
+    }
+
     private void updateLiquibase(String changelog) throws Exception {
         try (Connection connection = dataSource.getConnection()) {
             Database database = DatabaseFactory.getInstance()

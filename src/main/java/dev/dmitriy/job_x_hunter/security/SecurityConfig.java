@@ -31,6 +31,7 @@ public class SecurityConfig {
                         .requestMatchers("/users/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/job-vacancies/**", "/job-skills/**").hasRole("ADMIN")
                         .requestMatchers("/profiles/**", "/resumes/**", "/user-profile-skill/**").authenticated()
+                        .requestMatchers("/api/search-filters/me").authenticated()
                         .anyRequest().denyAll())
                 .oauth2ResourceServer(oauth -> oauth.jwt(jwt -> jwt.jwtAuthenticationConverter(roleConverter())))
                 .build();
