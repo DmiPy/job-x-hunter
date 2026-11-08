@@ -34,7 +34,8 @@ public class GlobalExceptionHandler {
             UserProfileSkillNotFoundException.class,
             SkillNotFoundException.class,
             ResumeNotFoundException.class,
-            JobVacancyNotFoundException.class
+            JobVacancyNotFoundException.class,
+            SearchFilterNotFoundException.class
     })
     public ResponseEntity<ErrorResponse> handleNotFound(RuntimeException ex) {
         return response(HttpStatus.NOT_FOUND, ex.getMessage());
@@ -46,7 +47,8 @@ public class GlobalExceptionHandler {
             UserProfileSkillAlreadyExistsException.class,
             JobVacancyAlreadyExistsException.class,
             JobSkillAlreadyExistsException.class,
-            DataIntegrityViolationException.class
+            DataIntegrityViolationException.class,
+            SearchFilterAlreadyExistsException.class
     })
     public ResponseEntity<ErrorResponse> handleConflict(RuntimeException ex) {
         return response(HttpStatus.CONFLICT, "The requested resource conflicts with existing data.");
@@ -67,6 +69,11 @@ public class GlobalExceptionHandler {
     })
     public ResponseEntity<ErrorResponse> handleBadRequest(Exception ex) {
         return response(HttpStatus.BAD_REQUEST, "The request is invalid.");
+    }
+
+    @ExceptionHandler(InvalidSearchFilterException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidSearchFilter(InvalidSearchFilterException ex) {
+        return response(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
     private ResponseEntity<ErrorResponse> response(HttpStatus status, String message) {

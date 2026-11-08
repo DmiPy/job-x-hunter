@@ -43,3 +43,22 @@ databaseChangeLog:
         - sqlFile:
             path: V5__keycloak_identity.sql
             relativeToChangelogFile: true
+
+  - changeSet:
+      id: 6
+      author: dmitriy
+      preConditions:
+        - onFail: HALT
+        - sqlCheck:
+            expectedResult: "0"
+            sql: SELECT COUNT(*) FROM (SELECT user_profile_id FROM search_filter GROUP BY user_profile_id HAVING COUNT(*) > 1) duplicates
+        - sqlCheck:
+            expectedResult: "0"
+            sql: SELECT COUNT(*) FROM search_filter WHERE (min_salary IS NOT NULL AND min_salary <> 0) OR max_salary IS NOT NULL
+        - sqlCheck:
+            expectedResult: "0"
+            sql: SELECT COUNT(*) FROM search_filter_preferred_skill p JOIN search_filter_prohibited_skill x ON x.search_filter_id = p.search_filter_id AND x.skill_id = p.skill_id
+      changes:
+        - sqlFile:
+            path: V6__search_filter.sql
+            relativeToChangelogFile: true

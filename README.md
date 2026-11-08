@@ -97,6 +97,28 @@ be running before executing:
 The tests dynamically provide their datasource and never use the local or
 production database configuration.
 
+## Search filters (Phase 3)
+
+Authenticated endpoints: `GET`, `POST`, `PATCH`, and `DELETE /api/search-filters/me`.
+The server resolves the profile from the JWT; request bodies must not supply a
+user or profile ID. A profile has at most one filter. Create returns 201,
+duplicate create 409, and a missing profile or filter 404.
+
+`minimumSalary` is the minimum desired **annual gross salary in EUR**. It is
+only a user preference; this phase does not compare or convert vacancy salaries.
+`employmentTypes` and `workplaceTypes` accept arrays of existing enum names;
+`preferredSkillIds` and `excludedSkillIds` reference existing catalog skills.
+A skill in both lists, an unknown/duplicate skill ID, or a negative salary or
+radius returns 400. `preferredLocation`, `radiusKm`, `minimumSalary`, `keywords`,
+and all four collections are optional. On PATCH, omitted fields remain unchanged;
+explicit `null` clears an optional field or collection, and `[]` clears a
+collection.
+
+V6 reuses the V1 skill join tables and preserves existing rows. It halts instead
+of guessing if an existing profile has multiple filters, old nonzero/min-max
+salary data of unknown currency/period, or conflicting preferred/excluded skills.
+Resolve such data deliberately before migrating that database.
+
 ## Keycloak local authentication
 
 Copy `.env.example` to `.env`, replace the local placeholder passwords, then
