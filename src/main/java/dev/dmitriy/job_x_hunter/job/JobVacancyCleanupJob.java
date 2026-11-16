@@ -3,7 +3,6 @@ package dev.dmitriy.job_x_hunter.job;
 import dev.dmitriy.job_x_hunter.service.JobVacancyService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -17,7 +16,7 @@ public class JobVacancyCleanupJob {
         this.jobVacancyService = jobVacancyService;
     }
 
-    @Scheduled(cron = "0 0 3 * * *")
+    // Retention must account for user interactions before automatic deletion is enabled.
     public void cleanup() {
 
         log.info("Starting job vacancy cleanup");

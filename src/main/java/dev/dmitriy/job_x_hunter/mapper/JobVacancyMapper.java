@@ -40,6 +40,14 @@ public class JobVacancyMapper {
         dto.setCompanyLocation(entity.getCompanyLocation());
         dto.setSource(entity.getSource());
         dto.setSourceJobId(entity.getSourceJobId());
+        dto.setSourcePublishedAt(entity.getSourcePublishedAt());
+        dto.setFirstSeenAt(entity.getFirstSeenAt());
+        dto.setLastSeenAt(entity.getLastSeenAt());
+        dto.setSalaryMin(entity.getSalaryMin());
+        dto.setSalaryMax(entity.getSalaryMax());
+        dto.setSalaryCurrency(entity.getSalaryCurrency());
+        dto.setSalaryPeriod(entity.getSalaryPeriod());
+        dto.setSalaryIsPredicted(entity.getSalaryIsPredicted());
 
         return dto;
     }

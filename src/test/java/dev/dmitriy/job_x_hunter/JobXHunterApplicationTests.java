@@ -9,6 +9,8 @@ import dev.dmitriy.job_x_hunter.repository.ResumeRepository;
 import dev.dmitriy.job_x_hunter.repository.UserProfileRepository;
 import dev.dmitriy.job_x_hunter.repository.UserRepository;
 import dev.dmitriy.job_x_hunter.security.CurrentUserService;
+import dev.dmitriy.job_x_hunter.ingestion.VacancyUpsertRepository;
+import dev.dmitriy.job_x_hunter.ingestion.JobVacancyData;
 import liquibase.Contexts;
 import liquibase.Liquibase;
 import liquibase.database.Database;
@@ -87,6 +89,53 @@ class JobXHunterApplicationTests {
 
     @Autowired
     private CurrentUserService currentUserService;
+
+    @Autowired
+    private VacancyUpsertRepository vacancyUpserts;
+
+    @Test
+    @Order(10)
+    void ingestionUpsertPreservesIdentityAndJobSkill() {
+        String sourceId = UUID.randomUUID().toString();
+        var first = new JobVacancyData("TEST_INGEST", sourceId, "Title", "https://example.test/job", null, null, null,
+                null, null, null, null, null, null);
+        long id = vacancyUpserts.upsert(first);
+        Long skillId = jdbcTemplate.queryForObject("SELECT MIN(skill_id) FROM skill", Long.class);
+        jdbcTemplate.update("INSERT INTO job_skill (job_vacancy_id, skill_id) VALUES (?, ?)", id, skillId);
+        var updated = new JobVacancyData("TEST_INGEST", sourceId, "Updated", "https://example.test/job", null, null, null,
+                null, null, null, null, null, null);
+        assertEquals(id, vacancyUpserts.upsert(updated));
+        assertEquals("Updated", jdbcTemplate.queryForObject("SELECT title FROM job_vacancy WHERE job_vacancy_id = ?", String.class, id));
+        assertEquals(1, jdbcTemplate.queryForObject("SELECT COUNT(*) FROM job_skill WHERE job_vacancy_id = ?", Integer.class, id));
+    }
+
+    @Test
+    @Order(10)
+    void concurrentIngestionUpsertsCreateOneRow() throws Exception {
+        String id = UUID.randomUUID().toString();
+        var job = new JobVacancyData("CONCURRENT", id, "Job", "https://example.test/job", null, null, null,
+                null, null, null, null, null, null);
+        var latch = new CountDownLatch(1);
+        try (var executor = Executors.newFixedThreadPool(2)) {
+            var first = executor.submit(() -> { latch.await(); return vacancyUpserts.upsertWithResult(job); });
+            var second = executor.submit(() -> { latch.await(); return vacancyUpserts.upsertWithResult(job); });
+            latch.countDown();
+            var a = first.get(20, TimeUnit.SECONDS); var b = second.get(20, TimeUnit.SECONDS);
+            assertEquals(a.id(), b.id());
+            assertEquals(1, (a.inserted() ? 1 : 0) + (b.inserted() ? 1 : 0));
+        }
+        assertEquals(1, jdbcTemplate.queryForObject("SELECT COUNT(*) FROM job_vacancy WHERE source = ? AND source_job_id = ?", Integer.class, "CONCURRENT", id));
+    }
+
+    @Test
+    @Order(10)
+    void manualIngestionRequiresAdmin() throws Exception {
+        mockMvc.perform(post("/api/admin/ingestion")).andExpect(status().isUnauthorized());
+        mockMvc.perform(post("/api/admin/ingestion").with(jwt().authorities(new SimpleGrantedAuthority("ROLE_USER"))))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(post("/api/admin/ingestion").with(jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMIN"))))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.fetched").value(0));
+    }
 
     @Autowired
     private UserProfileRepository userProfileRepository;

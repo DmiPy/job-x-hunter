@@ -131,8 +131,19 @@ and requires Authorization Code flow with PKCE method `S256`.
 For an API token, use a local OIDC client such as Postman configured for
 Authorization Code + PKCE, issuer `http://localhost:8180/realms/jobxhunter`,
 client ID `jobxhunter-angular`, and callback
-`https://oauth.pstmn.io/v1/callback` (or the Angular localhost callback).
+`https://oauth.pstmn.io/v1/callback`, or
+`https://oauth.pstmn.io/v1/browser-callback` when using Postman's browser flow.
 Request `openid profile email` scopes and send the access token as `Authorization: Bearer …`.
+In Postman select OAuth 2.0, Authorization Code (With PKCE), challenge method
+S256, authorization URL `http://localhost:8180/realms/jobxhunter/protocol/openid-connect/auth`,
+token URL `http://localhost:8180/realms/jobxhunter/protocol/openid-connect/token`,
+and no client secret. To switch users, add `prompt=login` as an authorization
+request parameter before requesting a new token. Assign the `ADMIN` realm role
+for the manual ingestion endpoint; use a separate USER-only account to test 403.
+Importing a realm does not overwrite an existing realm: add the browser callback
+to the existing client's valid redirect URIs manually if necessary. Do not
+recreate a development Keycloak container merely to update its import file:
+its embedded development database and users may be lost.
 Example: `curl -H "Authorization: Bearer $TOKEN" http://localhost:8080/profiles/me`.
 The access token must contain verified `email`, `sub`, the `USER` or `ADMIN`
 realm role, and the `jobxhunter-api` audience. The development client includes
@@ -140,3 +151,68 @@ Keycloak's `basic` scope for `sub` and an API audience mapper.
 Production must set its own `KEYCLOAK_ISSUER_URI`, `KEYCLOAK_JWK_SET_URI`,
 `KEYCLOAK_AUDIENCE`, and allowed CORS origins;
 the development realm and its redirect URIs are for local use only.
+
+## Centralized Adzuna ingestion
+
+Ingestion is independent of user SearchFilters. Set `ADZUNA_ENABLED=true`,
+`ADZUNA_APP_ID`, and `ADZUNA_APP_KEY` in your local `.env`; credentials must
+never be committed. Search uses Germany (`de`). The semicolon-separated
+`ADZUNA_KEYWORDS`, `ADZUNA_LOCATIONS`, and `ADZUNA_CATEGORIES` lists form a
+Cartesian product, so keep them small. `ADZUNA_PAGE_SIZE` (1–50),
+`ADZUNA_MAX_PAGES`, `ADZUNA_RUN_BUDGET`, and `ADZUNA_DAILY_BUDGET` bound work.
+Every HTTP attempt, including retries, counts against both budgets. The daily
+budget resets at midnight UTC and is held in process memory: restarting or
+running multiple instances resets/multiplies it, so configure conservatively
+and monitor the Adzuna account quota independently.
+
+`ADZUNA_RETRIES`, `ADZUNA_PACING_MS`, `ADZUNA_BACKOFF_MS`,
+`ADZUNA_CONNECT_TIMEOUT_MS`, and `ADZUNA_READ_TIMEOUT_MS` control retries,
+pacing, and timeouts. `INGESTION_SCHEDULE_ENABLED=false` by default;
+`INGESTION_INTERVAL_MS` sets fixed delay when enabled. A manual run uses the
+same overlap lock and budget. In Postman, send an ADMIN access token with
+`POST http://localhost:8080/api/admin/ingestion` and no request body, or:
+
+    curl -X POST -H "Authorization: Bearer $TOKEN" http://localhost:8080/api/admin/ingestion
+
+The response reports fetched, inserted, updated, invalid, and failed counts;
+409 means a run is already active. Partial pages already received are saved.
+Currently `failed` includes incomplete source fetches as well as source and
+persistence errors: it does **not** distinguish a page-limit truncation from an
+exhausted request budget or a genuine HTTP/transport/response failure. A full
+page at the configured last page can therefore increment `failed` even when the
+request succeeded. Budget exhaustion can occur before any HTTP request; 429,
+timeouts, malformed responses, and server errors are actual source failures.
+The current API does not expose a reason, so its summary alone cannot tell these
+cases apart. Do not infer expiry or delete jobs from an incomplete run.
+Missing source salary currency and period remain unknown and are not compared
+with SearchFilter salary. Adzuna descriptions may be snippets. Existing
+`post_date` falls back to ingestion date for legacy compatibility; the nullable
+`source_published_at` is the actual source timestamp. Automatic vacancy deletion
+is disabled pending a retention policy that accounts for user interactions.
+
+### Isolated Windows smoke test
+
+Never point a fresh smoke test at an existing development database without
+approval: the local profile applies V1–V7, including V3 test seed data. Use a
+separate PostgreSQL container and named volume, such as `jobxhunter-phase4a-db`
+and `jobxhunter_phase4a_pgdata`. In an application container on the same Docker
+network, set `SPRING_DATASOURCE_URL` to
+`jdbc:postgresql://jobxhunter-phase4a-db:5432/jobxhunter_phase4a`, use the
+isolated database credentials, and set `SPRING_PROFILES_ACTIVE=local`.
+Point `KEYCLOAK_JWK_SET_URI` at the existing Keycloak container's internal URL.
+Bind the app to `127.0.0.1:18080:8080`; keep
+`INGESTION_SCHEDULE_ENABLED=false`. Start with `ADZUNA_ENABLED=false`, verify
+startup and the isolated database's `databasechangelog` IDs 1 through 7, then
+enable Adzuna only for an explicitly approved manual test. For the smallest
+repeatable test use one keyword and one location, `ADZUNA_PAGE_SIZE=10`,
+`ADZUNA_MAX_PAGES=1`, `ADZUNA_RUN_BUDGET=1`, `ADZUNA_DAILY_BUDGET=2`, and
+`ADZUNA_RETRIES=0`. Do not delete existing volumes or restart Keycloak.
+
+Send `POST http://localhost:18080/api/admin/ingestion` with an ADMIN bearer
+token; repeat once, then verify a USER token receives 403 and no token receives
+401. In the isolated database, compare `job_vacancy_id`, `first_seen_at`, and
+`last_seen_at` for matching `(source, source_job_id)` values, and check for
+duplicates with:
+
+    SELECT source, source_job_id, COUNT(*) FROM job_vacancy
+    GROUP BY source, source_job_id HAVING COUNT(*) > 1;

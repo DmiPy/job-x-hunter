@@ -62,3 +62,11 @@ databaseChangeLog:
         - sqlFile:
             path: V6__search_filter.sql
             relativeToChangelogFile: true
+
+  - changeSet:
+      id: 7
+      author: dmitriy
+      changes:
+        - sqlFile:
+            path: V7__ingestion_metadata.sql
+            relativeToChangelogFile: true

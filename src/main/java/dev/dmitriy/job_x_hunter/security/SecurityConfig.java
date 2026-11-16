@@ -29,6 +29,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/job-vacancies/**", "/skills/**", "/job-skills/job-vacancy/**").permitAll()
                         .requestMatchers("/users/me").authenticated()
                         .requestMatchers("/users/**").hasRole("ADMIN")
+                        .requestMatchers("/api/admin/ingestion").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/job-vacancies/**", "/job-skills/**").hasRole("ADMIN")
                         .requestMatchers("/profiles/**", "/resumes/**", "/user-profile-skill/**").authenticated()
                         .requestMatchers("/api/search-filters/me").authenticated()
